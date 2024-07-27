@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"github.com/yahkerobertkertasnya/TPAWebBack/database/postgresql"
-	"github.com/yahkerobertkertasnya/TPAWebBack/database/redis"
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph/model"
-	"github.com/yahkerobertkertasnya/TPAWebBack/helper"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/database/postgresql"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/database/redis"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
 	"time"
 )
 

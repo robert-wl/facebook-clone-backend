@@ -1,16 +1,15 @@
 package postgresql
 
 import (
-	"fmt"
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph/model"
-	"github.com/yahkerobertkertasnya/TPAWebBack/helper"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var database *gorm.DB
 
-const defaultDatabase = "host=localhost user=postgres password=postgres dbname=TPAWeb port=5432 sslmode=disable TimeZone=Asia/Jakarta"
+const defaultDatabase = "host=localhost user=postgres password=postgres dbname=facebook port=5432 sslmode=disable TimeZone=Asia/Jakarta"
 
 func GetInstance() *gorm.DB {
 	if database == nil {
@@ -30,8 +29,7 @@ func GetInstance() *gorm.DB {
 
 func MigrateDatabase() {
 	db := GetInstance()
-
-	err := db.AutoMigrate(
+	db.AutoMigrate(
 		&model.User{},
 		&model.Post{},
 		&model.PostVisibility{},
@@ -55,8 +53,26 @@ func MigrateDatabase() {
 		&model.BlockNotification{},
 	)
 
-	fmt.Println(err)
-	if err != nil {
-		panic(err)
-	}
+	//	&model.Comment{},
+	//	&model.CommentLike{},
+	//	&model.Friend{},
+	//	&model.Story{},
+	//	&model.Message{},
+	//	&model.Reel{},
+	//	&model.ReelLike{},
+	//	&model.ReelComment{},
+	//	&model.ReelCommentLike{},
+	//	&model.Group{},
+	//	&model.Member{},
+	//	&model.GroupFile{},
+	//	&model.Notification{},
+	//	&model.BlockNotification{},
+	//	&model.Conversation{},
+	//	&model.ConversationUsers{},
+	//)
+
+	//fmt.Println(err)
+	//if err != nil {
+	//	panic(err)
+	//}
 }

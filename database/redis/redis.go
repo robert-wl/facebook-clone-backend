@@ -2,7 +2,7 @@ package redis
 
 import (
 	"github.com/redis/go-redis/v9"
-	"github.com/yahkerobertkertasnya/TPAWebBack/helper"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
 )
 
 var client *redis.Client

@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph"
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph/model"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 )
 
 // CreateTextStory is the resolver for the createTextStory field.

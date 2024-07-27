@@ -2,7 +2,7 @@ package resolver
 
 import (
 	"github.com/redis/go-redis/v9"
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph/model"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 	"gorm.io/gorm"
 )
 

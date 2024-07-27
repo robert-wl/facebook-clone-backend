@@ -4,7 +4,7 @@ import (
 	"context"
 	"firebase.google.com/go/storage"
 	"fmt"
-	"github.com/yahkerobertkertasnya/TPAWebBack/helper"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
 
 	firebase "firebase.google.com/go"
 	"google.golang.org/api/option"

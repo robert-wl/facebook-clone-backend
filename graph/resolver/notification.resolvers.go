@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph/model"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 )
 
 // CreateNotification is the resolver for the createNotification field.

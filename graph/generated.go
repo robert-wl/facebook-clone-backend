@@ -18,7 +18,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph/model"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -6965,7 +6965,7 @@ func (ec *executionContext) _Mutation_updateUserProfile(ctx context.Context, fie
 		if data, ok := tmp.(*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7078,7 +7078,7 @@ func (ec *executionContext) _Mutation_updateUserBackground(ctx context.Context, 
 		if data, ok := tmp.(*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7191,7 +7191,7 @@ func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field grap
 		if data, ok := tmp.(*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7304,7 +7304,7 @@ func (ec *executionContext) _Mutation_updateTheme(ctx context.Context, field gra
 		if data, ok := tmp.(*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7417,7 +7417,7 @@ func (ec *executionContext) _Mutation_addFriend(ctx context.Context, field graph
 		if data, ok := tmp.(*model.Friend); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Friend`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Friend`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7497,7 +7497,7 @@ func (ec *executionContext) _Mutation_acceptFriend(ctx context.Context, field gr
 		if data, ok := tmp.(*model.Friend); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Friend`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Friend`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7577,7 +7577,7 @@ func (ec *executionContext) _Mutation_rejectFriend(ctx context.Context, field gr
 		if data, ok := tmp.(*model.Friend); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Friend`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Friend`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7657,7 +7657,7 @@ func (ec *executionContext) _Mutation_createGroup(ctx context.Context, field gra
 		if data, ok := tmp.(*model.Group); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Group`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Group`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7760,7 +7760,7 @@ func (ec *executionContext) _Mutation_inviteToGroup(ctx context.Context, field g
 		if data, ok := tmp.(*model.Member); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Member`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Member`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7847,7 +7847,7 @@ func (ec *executionContext) _Mutation_handleRequest(ctx context.Context, field g
 		if data, ok := tmp.(*model.Member); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Member`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Member`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7934,7 +7934,7 @@ func (ec *executionContext) _Mutation_updateGroupBackground(ctx context.Context,
 		if data, ok := tmp.(*model.Group); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Group`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Group`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8037,7 +8037,7 @@ func (ec *executionContext) _Mutation_uploadFile(ctx context.Context, field grap
 		if data, ok := tmp.(*model.GroupFile); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.GroupFile`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.GroupFile`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8200,7 +8200,7 @@ func (ec *executionContext) _Mutation_approveMember(ctx context.Context, field g
 		if data, ok := tmp.(*model.Member); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Member`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Member`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8287,7 +8287,7 @@ func (ec *executionContext) _Mutation_denyMember(ctx context.Context, field grap
 		if data, ok := tmp.(*model.Member); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Member`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Member`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8521,7 +8521,7 @@ func (ec *executionContext) _Mutation_promoteMember(ctx context.Context, field g
 		if data, ok := tmp.(*model.Member); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Member`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Member`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8608,7 +8608,7 @@ func (ec *executionContext) _Mutation_createConversation(ctx context.Context, fi
 		if data, ok := tmp.(*model.Conversation); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Conversation`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Conversation`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8690,7 +8690,7 @@ func (ec *executionContext) _Mutation_sendMessage(ctx context.Context, field gra
 		if data, ok := tmp.(*model.Message); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Message`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Message`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8778,7 +8778,7 @@ func (ec *executionContext) _Mutation_createNotification(ctx context.Context, fi
 		if data, ok := tmp.(*model.Notification); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Notification`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Notification`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8875,7 +8875,7 @@ func (ec *executionContext) _Mutation_getUnreadNotifications(ctx context.Context
 		if data, ok := tmp.([]*model.Notification); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Notification`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Notification`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8961,7 +8961,7 @@ func (ec *executionContext) _Mutation_blockUser(ctx context.Context, field graph
 		if data, ok := tmp.(*model.BlockNotification); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.BlockNotification`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.BlockNotification`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9042,7 +9042,7 @@ func (ec *executionContext) _Mutation_createPost(ctx context.Context, field grap
 		if data, ok := tmp.(*model.Post); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Post`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Post`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9146,7 +9146,7 @@ func (ec *executionContext) _Mutation_createComment(ctx context.Context, field g
 		if data, ok := tmp.(*model.Comment); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Comment`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Comment`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9314,7 +9314,7 @@ func (ec *executionContext) _Mutation_likePost(ctx context.Context, field graphq
 		if data, ok := tmp.(*model.PostLike); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.PostLike`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.PostLike`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9392,7 +9392,7 @@ func (ec *executionContext) _Mutation_likecomment(ctx context.Context, field gra
 		if data, ok := tmp.(*model.CommentLike); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.CommentLike`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.CommentLike`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9542,7 +9542,7 @@ func (ec *executionContext) _Mutation_createReel(ctx context.Context, field grap
 		if data, ok := tmp.(*model.Reel); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Reel`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Reel`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9641,7 +9641,7 @@ func (ec *executionContext) _Mutation_createReelComment(ctx context.Context, fie
 		if data, ok := tmp.(*model.ReelComment); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.ReelComment`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.ReelComment`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9740,7 +9740,7 @@ func (ec *executionContext) _Mutation_likeReel(ctx context.Context, field graphq
 		if data, ok := tmp.(*model.ReelLike); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.ReelLike`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.ReelLike`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9821,7 +9821,7 @@ func (ec *executionContext) _Mutation_likeReelComment(ctx context.Context, field
 		if data, ok := tmp.(*model.ReelCommentLike); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.ReelCommentLike`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.ReelCommentLike`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9902,7 +9902,7 @@ func (ec *executionContext) _Mutation_createTextStory(ctx context.Context, field
 		if data, ok := tmp.(*model.Story); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Story`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Story`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9993,7 +9993,7 @@ func (ec *executionContext) _Mutation_createImageStory(ctx context.Context, fiel
 		if data, ok := tmp.(*model.Story); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Story`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Story`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11713,7 +11713,7 @@ func (ec *executionContext) _Query_getUser(ctx context.Context, field graphql.Co
 		if data, ok := tmp.(*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12012,7 +12012,7 @@ func (ec *executionContext) _Query_getAuth(ctx context.Context, field graphql.Co
 		if data, ok := tmp.(*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12114,7 +12114,7 @@ func (ec *executionContext) _Query_getFilteredUsers(ctx context.Context, field g
 		if data, ok := tmp.([]*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12224,7 +12224,7 @@ func (ec *executionContext) _Query_getFriends(ctx context.Context, field graphql
 		if data, ok := tmp.([]*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12323,7 +12323,7 @@ func (ec *executionContext) _Query_getFriendRequests(ctx context.Context, field 
 		if data, ok := tmp.([]*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12422,7 +12422,7 @@ func (ec *executionContext) _Query_getUserFriends(ctx context.Context, field gra
 		if data, ok := tmp.([]*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12532,7 +12532,7 @@ func (ec *executionContext) _Query_getUserMutuals(ctx context.Context, field gra
 		if data, ok := tmp.([]*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12642,7 +12642,7 @@ func (ec *executionContext) _Query_getPeopleMightKnow(ctx context.Context, field
 		if data, ok := tmp.([]*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12741,7 +12741,7 @@ func (ec *executionContext) _Query_getGroup(ctx context.Context, field graphql.C
 		if data, ok := tmp.(*model.Group); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Group`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Group`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12841,7 +12841,7 @@ func (ec *executionContext) _Query_getGroupInvite(ctx context.Context, field gra
 		if data, ok := tmp.([]*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12951,7 +12951,7 @@ func (ec *executionContext) _Query_getGroups(ctx context.Context, field graphql.
 		if data, ok := tmp.([]*model.Group); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Group`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Group`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13040,7 +13040,7 @@ func (ec *executionContext) _Query_getJoinedGroups(ctx context.Context, field gr
 		if data, ok := tmp.([]*model.Group); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Group`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Group`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13129,7 +13129,7 @@ func (ec *executionContext) _Query_getGroupFiles(ctx context.Context, field grap
 		if data, ok := tmp.([]*model.GroupFile); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.GroupFile`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.GroupFile`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13217,7 +13217,7 @@ func (ec *executionContext) _Query_getJoinRequests(ctx context.Context, field gr
 		if data, ok := tmp.([]*model.Member); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Member`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Member`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13301,7 +13301,7 @@ func (ec *executionContext) _Query_getFilteredGroups(ctx context.Context, field 
 		if data, ok := tmp.([]*model.Group); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Group`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Group`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13401,7 +13401,7 @@ func (ec *executionContext) _Query_getConversations(ctx context.Context, field g
 		if data, ok := tmp.([]*model.Conversation); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Conversation`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Conversation`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13472,7 +13472,7 @@ func (ec *executionContext) _Query_getNotifications(ctx context.Context, field g
 		if data, ok := tmp.([]*model.Notification); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Notification`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Notification`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13558,7 +13558,7 @@ func (ec *executionContext) _Query_getPost(ctx context.Context, field graphql.Co
 		if data, ok := tmp.(*model.Post); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Post`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Post`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13662,7 +13662,7 @@ func (ec *executionContext) _Query_getPosts(ctx context.Context, field graphql.C
 		if data, ok := tmp.([]*model.Post); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Post`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Post`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13766,7 +13766,7 @@ func (ec *executionContext) _Query_getGroupPosts(ctx context.Context, field grap
 		if data, ok := tmp.([]*model.Post); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Post`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Post`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13870,7 +13870,7 @@ func (ec *executionContext) _Query_getCommentPost(ctx context.Context, field gra
 		if data, ok := tmp.([]*model.Comment); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Comment`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Comment`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13966,7 +13966,7 @@ func (ec *executionContext) _Query_getFilteredPosts(ctx context.Context, field g
 		if data, ok := tmp.([]*model.Post); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Post`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Post`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14070,7 +14070,7 @@ func (ec *executionContext) _Query_getGroupHomePosts(ctx context.Context, field 
 		if data, ok := tmp.([]*model.Post); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Post`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Post`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14235,7 +14235,7 @@ func (ec *executionContext) _Query_getReel(ctx context.Context, field graphql.Co
 		if data, ok := tmp.(*model.Reel); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Reel`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Reel`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14334,7 +14334,7 @@ func (ec *executionContext) _Query_getReelComments(ctx context.Context, field gr
 		if data, ok := tmp.([]*model.ReelComment); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.ReelComment`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.ReelComment`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14433,7 +14433,7 @@ func (ec *executionContext) _Query_getStories(ctx context.Context, field graphql
 		if data, ok := tmp.([]*model.Story); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.Story`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Story`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14521,7 +14521,7 @@ func (ec *executionContext) _Query_getUserWithStories(ctx context.Context, field
 		if data, ok := tmp.([]*model.User); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/TPAWebBack/graph/model.User`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)

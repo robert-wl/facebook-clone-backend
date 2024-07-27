@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph"
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph/model"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 )
 
 // CreateConversation is the resolver for the createConversation field.

@@ -11,13 +11,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	cors2 "github.com/rs/cors"
-	"github.com/yahkerobertkertasnya/TPAWebBack/database/postgresql"
-	"github.com/yahkerobertkertasnya/TPAWebBack/database/redis"
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph"
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph/resolver"
-	"github.com/yahkerobertkertasnya/TPAWebBack/helper"
-	"github.com/yahkerobertkertasnya/TPAWebBack/helper/directives"
-	"github.com/yahkerobertkertasnya/TPAWebBack/middleware"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/database/postgresql"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/database/redis"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/resolver"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper/directives"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/middleware"
 	"log"
 	"net/http"
 )
@@ -25,6 +25,7 @@ import (
 const defaultPort = "8080"
 
 func main() {
+
 	port := helper.GetDotENVVariable("PORT", defaultPort)
 
 	router := chi.NewRouter()

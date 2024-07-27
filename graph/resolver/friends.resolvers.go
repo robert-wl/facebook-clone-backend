@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph/model"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 )
 
 // AddFriend is the resolver for the addFriend field.

@@ -1,7 +1,7 @@
 package mail
 
 import (
-	"github.com/yahkerobertkertasnya/TPAWebBack/helper"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
 )
 
 const defaultName = "Robber"

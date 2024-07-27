@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph"
-	"github.com/yahkerobertkertasnya/TPAWebBack/graph/model"
-	"github.com/yahkerobertkertasnya/TPAWebBack/helper"
-	"github.com/yahkerobertkertasnya/TPAWebBack/helper/mail"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper/mail"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -30,7 +30,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		Email:      input.Email,
 		Dob:        input.Dob,
 		Gender:     input.Gender,
-		Active:     false,
+		Active:     true,
 		MiscId:     &activationId,
 		Profile:    nil,
 		Background: nil,
@@ -43,16 +43,16 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		user.Password = hashed
 	}
 
-	html := fmt.Sprintf(
-		`
-		<h1>Activate</h1>
-		<a href="http://localhost:5173/activate/%s">Click here to activate your account</a>
-		`, activationId)
+	//html := fmt.Sprintf(
+	//	`
+	//	<h1>Activate</h1>
+	//	<a href="http://localhost:5173/activate/%s">Click here to activate your account</a>
+	//	`, activationId)
 
-	_, err := mail.SendVerification(user.Email, "Activate Account", html)
-	if err != nil {
-		return nil, err
-	}
+	//_, err := mail.SendVerification(user.Email, "Activate Account", html)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	if err := r.DB.Save(&user).Error; err != nil {
 		return nil, err
