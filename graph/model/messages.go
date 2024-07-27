@@ -5,8 +5,6 @@ import "time"
 type Conversation struct {
 	ID       string               `json:"id"`
 	Users    []*ConversationUsers `json:"users" gorm:"foreignKey:ConversationID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	GroupID  *string              `json:"groupId,omitempty"`
-	Group    *Group               `json:"group,omitempty" gorm:"foreignKey:GroupID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Messages []*Message           `json:"messages,omitempty" gorm:"foreignKey:ConversationID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 

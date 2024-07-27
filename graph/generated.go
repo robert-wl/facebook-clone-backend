@@ -26,6 +26,7 @@ import (
 // NewExecutableSchema creates an ExecutableSchema from the ResolverRoot interface.
 func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 	return &executableSchema{
+		schema:     cfg.Schema,
 		resolvers:  cfg.Resolvers,
 		directives: cfg.Directives,
 		complexity: cfg.Complexity,
@@ -33,6 +34,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 }
 
 type Config struct {
+	Schema     *ast.Schema
 	Resolvers  ResolverRoot
 	Directives DirectiveRoot
 	Complexity ComplexityRoot
@@ -80,7 +82,6 @@ type ComplexityRoot struct {
 	}
 
 	Conversation struct {
-		Group    func(childComplexity int) int
 		ID       func(childComplexity int) int
 		Messages func(childComplexity int) int
 		Users    func(childComplexity int) int
@@ -454,12 +455,16 @@ type UserResolver interface {
 }
 
 type executableSchema struct {
+	schema     *ast.Schema
 	resolvers  ResolverRoot
 	directives DirectiveRoot
 	complexity ComplexityRoot
 }
 
 func (e *executableSchema) Schema() *ast.Schema {
+	if e.schema != nil {
+		return e.schema
+	}
 	return parsedSchema
 }
 
@@ -572,13 +577,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CommentLike.User(childComplexity), true
-
-	case "Conversation.group":
-		if e.complexity.Conversation.Group == nil {
-			break
-		}
-
-		return e.complexity.Conversation.Group(childComplexity), true
 
 	case "Conversation.id":
 		if e.complexity.Conversation.ID == nil {
@@ -2362,14 +2360,14 @@ func (ec *executionContext) introspectSchema() (*introspection.Schema, error) {
 	if ec.DisableIntrospection {
 		return nil, errors.New("introspection disabled")
 	}
-	return introspection.WrapSchema(parsedSchema), nil
+	return introspection.WrapSchema(ec.Schema()), nil
 }
 
 func (ec *executionContext) introspectType(name string) (*introspection.Type, error) {
 	if ec.DisableIntrospection {
 		return nil, errors.New("introspection disabled")
 	}
-	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
+	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
 //go:embed "schema/friends.graphqls" "schema/group.graphqls" "schema/messages.graphqls" "schema/notification.graphqls" "schema/post.graphqls" "schema/reels.graphqls" "schema/story.graphqls" "schema/user.graphqls"
@@ -2435,7 +2433,7 @@ func (ec *executionContext) field_Mutation_addFriend_args(ctx context.Context, r
 	var arg0 model.FriendInput
 	if tmp, ok := rawArgs["friendInput"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("friendInput"))
-		arg0, err = ec.unmarshalNFriendInput2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐFriendInput(ctx, tmp)
+		arg0, err = ec.unmarshalNFriendInput2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐFriendInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2513,7 +2511,7 @@ func (ec *executionContext) field_Mutation_createComment_args(ctx context.Contex
 	var arg0 model.NewComment
 	if tmp, ok := rawArgs["newComment"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("newComment"))
-		arg0, err = ec.unmarshalNNewComment2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewComment(ctx, tmp)
+		arg0, err = ec.unmarshalNNewComment2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewComment(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2543,7 +2541,7 @@ func (ec *executionContext) field_Mutation_createGroup_args(ctx context.Context,
 	var arg0 model.NewGroup
 	if tmp, ok := rawArgs["group"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("group"))
-		arg0, err = ec.unmarshalNNewGroup2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewGroup(ctx, tmp)
+		arg0, err = ec.unmarshalNNewGroup2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewGroup(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2558,7 +2556,7 @@ func (ec *executionContext) field_Mutation_createImageStory_args(ctx context.Con
 	var arg0 model.NewImageStory
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewImageStory2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewImageStory(ctx, tmp)
+		arg0, err = ec.unmarshalNNewImageStory2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewImageStory(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2573,7 +2571,7 @@ func (ec *executionContext) field_Mutation_createNotification_args(ctx context.C
 	var arg0 model.NewNotification
 	if tmp, ok := rawArgs["notification"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notification"))
-		arg0, err = ec.unmarshalNNewNotification2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewNotification(ctx, tmp)
+		arg0, err = ec.unmarshalNNewNotification2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewNotification(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2588,7 +2586,7 @@ func (ec *executionContext) field_Mutation_createPost_args(ctx context.Context, 
 	var arg0 model.NewPost
 	if tmp, ok := rawArgs["newPost"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("newPost"))
-		arg0, err = ec.unmarshalNNewPost2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewPost(ctx, tmp)
+		arg0, err = ec.unmarshalNNewPost2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewPost(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2603,7 +2601,7 @@ func (ec *executionContext) field_Mutation_createReelComment_args(ctx context.Co
 	var arg0 model.NewReelComment
 	if tmp, ok := rawArgs["comment"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("comment"))
-		arg0, err = ec.unmarshalNNewReelComment2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewReelComment(ctx, tmp)
+		arg0, err = ec.unmarshalNNewReelComment2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewReelComment(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2618,7 +2616,7 @@ func (ec *executionContext) field_Mutation_createReel_args(ctx context.Context, 
 	var arg0 model.NewReel
 	if tmp, ok := rawArgs["reel"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reel"))
-		arg0, err = ec.unmarshalNNewReel2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewReel(ctx, tmp)
+		arg0, err = ec.unmarshalNNewReel2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewReel(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2633,7 +2631,7 @@ func (ec *executionContext) field_Mutation_createTextStory_args(ctx context.Cont
 	var arg0 model.NewTextStory
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewTextStory2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewTextStory(ctx, tmp)
+		arg0, err = ec.unmarshalNNewTextStory2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewTextStory(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2648,7 +2646,7 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 	var arg0 model.NewUser
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewUser2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewUser(ctx, tmp)
+		arg0, err = ec.unmarshalNNewUser2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewUser(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3068,7 +3066,7 @@ func (ec *executionContext) field_Mutation_updateUser_args(ctx context.Context, 
 	var arg0 model.UpdateUser
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateUser2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUpdateUser(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateUser2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUpdateUser(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3092,7 +3090,7 @@ func (ec *executionContext) field_Mutation_uploadFile_args(ctx context.Context, 
 	var arg1 model.NewGroupFile
 	if tmp, ok := rawArgs["file"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
-		arg1, err = ec.unmarshalNNewGroupFile2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewGroupFile(ctx, tmp)
+		arg1, err = ec.unmarshalNNewGroupFile2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewGroupFile(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3176,7 +3174,7 @@ func (ec *executionContext) field_Query_getFilteredGroups_args(ctx context.Conte
 	var arg1 model.Pagination
 	if tmp, ok := rawArgs["pagination"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg1, err = ec.unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPagination(ctx, tmp)
+		arg1, err = ec.unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3200,7 +3198,7 @@ func (ec *executionContext) field_Query_getFilteredPosts_args(ctx context.Contex
 	var arg1 model.Pagination
 	if tmp, ok := rawArgs["pagination"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg1, err = ec.unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPagination(ctx, tmp)
+		arg1, err = ec.unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3224,7 +3222,7 @@ func (ec *executionContext) field_Query_getFilteredUsers_args(ctx context.Contex
 	var arg1 model.Pagination
 	if tmp, ok := rawArgs["pagination"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg1, err = ec.unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPagination(ctx, tmp)
+		arg1, err = ec.unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3254,7 +3252,7 @@ func (ec *executionContext) field_Query_getGroupHomePosts_args(ctx context.Conte
 	var arg0 model.Pagination
 	if tmp, ok := rawArgs["pagination"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg0, err = ec.unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPagination(ctx, tmp)
+		arg0, err = ec.unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3293,7 +3291,7 @@ func (ec *executionContext) field_Query_getGroupPosts_args(ctx context.Context, 
 	var arg1 model.Pagination
 	if tmp, ok := rawArgs["pagination"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg1, err = ec.unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPagination(ctx, tmp)
+		arg1, err = ec.unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3353,7 +3351,7 @@ func (ec *executionContext) field_Query_getPosts_args(ctx context.Context, rawAr
 	var arg0 model.Pagination
 	if tmp, ok := rawArgs["pagination"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg0, err = ec.unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPagination(ctx, tmp)
+		arg0, err = ec.unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3530,10 +3528,10 @@ func (ec *executionContext) _BlockNotification_sender(ctx context.Context, field
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_BlockNotification_sender(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BlockNotification_sender(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BlockNotification",
 		Field:      field,
@@ -3609,10 +3607,10 @@ func (ec *executionContext) _BlockNotification_receiver(ctx context.Context, fie
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_BlockNotification_receiver(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BlockNotification_receiver(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BlockNotification",
 		Field:      field,
@@ -3694,7 +3692,7 @@ func (ec *executionContext) _Comment_id(ctx context.Context, field graphql.Colle
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -3735,10 +3733,10 @@ func (ec *executionContext) _Comment_user(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -3820,7 +3818,7 @@ func (ec *executionContext) _Comment_content(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_content(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -3864,7 +3862,7 @@ func (ec *executionContext) _Comment_likeCount(ctx context.Context, field graphq
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_likeCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_likeCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -3908,7 +3906,7 @@ func (ec *executionContext) _Comment_replyCount(ctx context.Context, field graph
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_replyCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_replyCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -3946,10 +3944,10 @@ func (ec *executionContext) _Comment_parentPost(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_parentPost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_parentPost(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -4019,10 +4017,10 @@ func (ec *executionContext) _Comment_parentComment(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_parentComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_parentComment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -4084,10 +4082,10 @@ func (ec *executionContext) _Comment_likes(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.CommentLike)
 	fc.Result = res
-	return ec.marshalOCommentLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐCommentLike(ctx, field.Selections, res)
+	return ec.marshalOCommentLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐCommentLike(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_likes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_likes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -4131,10 +4129,10 @@ func (ec *executionContext) _Comment_comments(ctx context.Context, field graphql
 	}
 	res := resTmp.([]*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_comments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_comments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -4199,7 +4197,7 @@ func (ec *executionContext) _Comment_liked(ctx context.Context, field graphql.Co
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_liked(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_liked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -4243,7 +4241,7 @@ func (ec *executionContext) _Comment_createdAt(ctx context.Context, field graphq
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -4287,7 +4285,7 @@ func (ec *executionContext) _CommentLike_commentId(ctx context.Context, field gr
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CommentLike_commentId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CommentLike_commentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CommentLike",
 		Field:      field,
@@ -4328,10 +4326,10 @@ func (ec *executionContext) _CommentLike_user(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CommentLike_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CommentLike_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CommentLike",
 		Field:      field,
@@ -4413,7 +4411,7 @@ func (ec *executionContext) _Conversation_id(ctx context.Context, field graphql.
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Conversation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Conversation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Conversation",
 		Field:      field,
@@ -4454,10 +4452,10 @@ func (ec *executionContext) _Conversation_users(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.ConversationUsers)
 	fc.Result = res
-	return ec.marshalNConversationUsers2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐConversationUsersᚄ(ctx, field.Selections, res)
+	return ec.marshalNConversationUsers2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐConversationUsersᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Conversation_users(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Conversation_users(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Conversation",
 		Field:      field,
@@ -4471,75 +4469,6 @@ func (ec *executionContext) fieldContext_Conversation_users(ctx context.Context,
 				return ec.fieldContext_ConversationUsers_user(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ConversationUsers", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Conversation_group(ctx context.Context, field graphql.CollectedField, obj *model.Conversation) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Conversation_group(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Group, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Group)
-	fc.Result = res
-	return ec.marshalOGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Conversation_group(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Conversation",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Group_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Group_name(ctx, field)
-			case "about":
-				return ec.fieldContext_Group_about(ctx, field)
-			case "privacy":
-				return ec.fieldContext_Group_privacy(ctx, field)
-			case "background":
-				return ec.fieldContext_Group_background(ctx, field)
-			case "members":
-				return ec.fieldContext_Group_members(ctx, field)
-			case "memberCount":
-				return ec.fieldContext_Group_memberCount(ctx, field)
-			case "joined":
-				return ec.fieldContext_Group_joined(ctx, field)
-			case "isAdmin":
-				return ec.fieldContext_Group_isAdmin(ctx, field)
-			case "chat":
-				return ec.fieldContext_Group_chat(ctx, field)
-			case "posts":
-				return ec.fieldContext_Group_posts(ctx, field)
-			case "files":
-				return ec.fieldContext_Group_files(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Group_createdAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Group", field.Name)
 		},
 	}
 	return fc, nil
@@ -4570,10 +4499,10 @@ func (ec *executionContext) _Conversation_messages(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.Message)
 	fc.Result = res
-	return ec.marshalOMessage2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res)
+	return ec.marshalOMessage2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Conversation_messages(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Conversation_messages(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Conversation",
 		Field:      field,
@@ -4633,7 +4562,7 @@ func (ec *executionContext) _ConversationUsers_conversationId(ctx context.Contex
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConversationUsers_conversationId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConversationUsers_conversationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConversationUsers",
 		Field:      field,
@@ -4674,10 +4603,10 @@ func (ec *executionContext) _ConversationUsers_user(ctx context.Context, field g
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConversationUsers_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConversationUsers_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConversationUsers",
 		Field:      field,
@@ -4756,10 +4685,10 @@ func (ec *executionContext) _Friend_sender(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Friend_sender(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Friend_sender(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Friend",
 		Field:      field,
@@ -4838,10 +4767,10 @@ func (ec *executionContext) _Friend_receiver(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Friend_receiver(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Friend_receiver(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Friend",
 		Field:      field,
@@ -4923,7 +4852,7 @@ func (ec *executionContext) _Friend_accepted(ctx context.Context, field graphql.
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Friend_accepted(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Friend_accepted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Friend",
 		Field:      field,
@@ -4967,7 +4896,7 @@ func (ec *executionContext) _Group_id(ctx context.Context, field graphql.Collect
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -5011,7 +4940,7 @@ func (ec *executionContext) _Group_name(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -5055,7 +4984,7 @@ func (ec *executionContext) _Group_about(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_about(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_about(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -5099,7 +5028,7 @@ func (ec *executionContext) _Group_privacy(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_privacy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_privacy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -5143,7 +5072,7 @@ func (ec *executionContext) _Group_background(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_background(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_background(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -5184,10 +5113,10 @@ func (ec *executionContext) _Group_members(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Member)
 	fc.Result = res
-	return ec.marshalNMember2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMemberᚄ(ctx, field.Selections, res)
+	return ec.marshalNMember2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMemberᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_members(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_members(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -5243,7 +5172,7 @@ func (ec *executionContext) _Group_memberCount(ctx context.Context, field graphq
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_memberCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_memberCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -5287,7 +5216,7 @@ func (ec *executionContext) _Group_joined(ctx context.Context, field graphql.Col
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_joined(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_joined(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -5331,7 +5260,7 @@ func (ec *executionContext) _Group_isAdmin(ctx context.Context, field graphql.Co
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_isAdmin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_isAdmin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -5369,10 +5298,10 @@ func (ec *executionContext) _Group_chat(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.Conversation)
 	fc.Result = res
-	return ec.marshalOConversation2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐConversation(ctx, field.Selections, res)
+	return ec.marshalOConversation2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐConversation(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_chat(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_chat(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -5384,8 +5313,6 @@ func (ec *executionContext) fieldContext_Group_chat(ctx context.Context, field g
 				return ec.fieldContext_Conversation_id(ctx, field)
 			case "users":
 				return ec.fieldContext_Conversation_users(ctx, field)
-			case "group":
-				return ec.fieldContext_Conversation_group(ctx, field)
 			case "messages":
 				return ec.fieldContext_Conversation_messages(ctx, field)
 			}
@@ -5420,10 +5347,10 @@ func (ec *executionContext) _Group_posts(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_posts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_posts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -5493,10 +5420,10 @@ func (ec *executionContext) _Group_files(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.GroupFile)
 	fc.Result = res
-	return ec.marshalOGroupFile2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroupFile(ctx, field.Selections, res)
+	return ec.marshalOGroupFile2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroupFile(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_files(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -5556,7 +5483,7 @@ func (ec *executionContext) _Group_createdAt(ctx context.Context, field graphql.
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Group_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Group_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Group",
 		Field:      field,
@@ -5600,7 +5527,7 @@ func (ec *executionContext) _GroupFile_id(ctx context.Context, field graphql.Col
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_GroupFile_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_GroupFile_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GroupFile",
 		Field:      field,
@@ -5644,7 +5571,7 @@ func (ec *executionContext) _GroupFile_groupID(ctx context.Context, field graphq
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_GroupFile_groupID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_GroupFile_groupID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GroupFile",
 		Field:      field,
@@ -5688,7 +5615,7 @@ func (ec *executionContext) _GroupFile_name(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_GroupFile_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_GroupFile_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GroupFile",
 		Field:      field,
@@ -5732,7 +5659,7 @@ func (ec *executionContext) _GroupFile_type(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_GroupFile_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_GroupFile_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GroupFile",
 		Field:      field,
@@ -5776,7 +5703,7 @@ func (ec *executionContext) _GroupFile_url(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_GroupFile_url(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_GroupFile_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GroupFile",
 		Field:      field,
@@ -5817,10 +5744,10 @@ func (ec *executionContext) _GroupFile_uploadedBy(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_GroupFile_uploadedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_GroupFile_uploadedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GroupFile",
 		Field:      field,
@@ -5902,7 +5829,7 @@ func (ec *executionContext) _GroupFile_uploadedAt(ctx context.Context, field gra
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_GroupFile_uploadedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_GroupFile_uploadedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GroupFile",
 		Field:      field,
@@ -5946,7 +5873,7 @@ func (ec *executionContext) _Member_groupId(ctx context.Context, field graphql.C
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Member_groupId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Member_groupId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Member",
 		Field:      field,
@@ -5987,10 +5914,10 @@ func (ec *executionContext) _Member_user(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Member_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Member_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Member",
 		Field:      field,
@@ -6072,7 +5999,7 @@ func (ec *executionContext) _Member_approved(ctx context.Context, field graphql.
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Member_approved(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Member_approved(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Member",
 		Field:      field,
@@ -6116,7 +6043,7 @@ func (ec *executionContext) _Member_requested(ctx context.Context, field graphql
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Member_requested(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Member_requested(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Member",
 		Field:      field,
@@ -6160,7 +6087,7 @@ func (ec *executionContext) _Member_role(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Member_role(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Member_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Member",
 		Field:      field,
@@ -6204,7 +6131,7 @@ func (ec *executionContext) _Message_id(ctx context.Context, field graphql.Colle
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Message_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Message_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Message",
 		Field:      field,
@@ -6248,7 +6175,7 @@ func (ec *executionContext) _Message_conversationId(ctx context.Context, field g
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Message_conversationId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Message_conversationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Message",
 		Field:      field,
@@ -6289,10 +6216,10 @@ func (ec *executionContext) _Message_sender(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Message_sender(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Message_sender(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Message",
 		Field:      field,
@@ -6371,7 +6298,7 @@ func (ec *executionContext) _Message_message(ctx context.Context, field graphql.
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Message_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Message_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Message",
 		Field:      field,
@@ -6412,7 +6339,7 @@ func (ec *executionContext) _Message_image(ctx context.Context, field graphql.Co
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Message_image(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Message_image(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Message",
 		Field:      field,
@@ -6450,10 +6377,10 @@ func (ec *executionContext) _Message_post(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Message_post(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Message_post(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Message",
 		Field:      field,
@@ -6529,7 +6456,7 @@ func (ec *executionContext) _Message_createdAt(ctx context.Context, field graphq
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Message_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Message_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Message",
 		Field:      field,
@@ -6570,7 +6497,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6663,7 +6590,7 @@ func (ec *executionContext) _Mutation_activateUser(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_activateUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6866,7 +6793,7 @@ func (ec *executionContext) _Mutation_resetPassword(ctx context.Context, field g
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_resetPassword(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6979,7 +6906,7 @@ func (ec *executionContext) _Mutation_updateUserProfile(ctx context.Context, fie
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateUserProfile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7092,7 +7019,7 @@ func (ec *executionContext) _Mutation_updateUserBackground(ctx context.Context, 
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateUserBackground(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7205,7 +7132,7 @@ func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7318,7 +7245,7 @@ func (ec *executionContext) _Mutation_updateTheme(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateTheme(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7428,7 +7355,7 @@ func (ec *executionContext) _Mutation_addFriend(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.Friend)
 	fc.Result = res
-	return ec.marshalOFriend2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐFriend(ctx, field.Selections, res)
+	return ec.marshalOFriend2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐFriend(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addFriend(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7508,7 +7435,7 @@ func (ec *executionContext) _Mutation_acceptFriend(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.Friend)
 	fc.Result = res
-	return ec.marshalOFriend2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐFriend(ctx, field.Selections, res)
+	return ec.marshalOFriend2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐFriend(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_acceptFriend(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7588,7 +7515,7 @@ func (ec *executionContext) _Mutation_rejectFriend(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.Friend)
 	fc.Result = res
-	return ec.marshalOFriend2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐFriend(ctx, field.Selections, res)
+	return ec.marshalOFriend2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐFriend(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_rejectFriend(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7671,7 +7598,7 @@ func (ec *executionContext) _Mutation_createGroup(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Group)
 	fc.Result = res
-	return ec.marshalNGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
+	return ec.marshalNGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createGroup(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7774,7 +7701,7 @@ func (ec *executionContext) _Mutation_inviteToGroup(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Member)
 	fc.Result = res
-	return ec.marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
+	return ec.marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_inviteToGroup(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7861,7 +7788,7 @@ func (ec *executionContext) _Mutation_handleRequest(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Member)
 	fc.Result = res
-	return ec.marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
+	return ec.marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_handleRequest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7948,7 +7875,7 @@ func (ec *executionContext) _Mutation_updateGroupBackground(ctx context.Context,
 	}
 	res := resTmp.(*model.Group)
 	fc.Result = res
-	return ec.marshalNGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
+	return ec.marshalNGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateGroupBackground(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8051,7 +7978,7 @@ func (ec *executionContext) _Mutation_uploadFile(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.GroupFile)
 	fc.Result = res
-	return ec.marshalNGroupFile2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroupFile(ctx, field.Selections, res)
+	return ec.marshalNGroupFile2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroupFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_uploadFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8214,7 +8141,7 @@ func (ec *executionContext) _Mutation_approveMember(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Member)
 	fc.Result = res
-	return ec.marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
+	return ec.marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_approveMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8301,7 +8228,7 @@ func (ec *executionContext) _Mutation_denyMember(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Member)
 	fc.Result = res
-	return ec.marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
+	return ec.marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_denyMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8535,7 +8462,7 @@ func (ec *executionContext) _Mutation_promoteMember(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Member)
 	fc.Result = res
-	return ec.marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
+	return ec.marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_promoteMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8619,7 +8546,7 @@ func (ec *executionContext) _Mutation_createConversation(ctx context.Context, fi
 	}
 	res := resTmp.(*model.Conversation)
 	fc.Result = res
-	return ec.marshalOConversation2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐConversation(ctx, field.Selections, res)
+	return ec.marshalOConversation2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐConversation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createConversation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8634,8 +8561,6 @@ func (ec *executionContext) fieldContext_Mutation_createConversation(ctx context
 				return ec.fieldContext_Conversation_id(ctx, field)
 			case "users":
 				return ec.fieldContext_Conversation_users(ctx, field)
-			case "group":
-				return ec.fieldContext_Conversation_group(ctx, field)
 			case "messages":
 				return ec.fieldContext_Conversation_messages(ctx, field)
 			}
@@ -8701,7 +8626,7 @@ func (ec *executionContext) _Mutation_sendMessage(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Message)
 	fc.Result = res
-	return ec.marshalOMessage2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res)
+	return ec.marshalOMessage2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_sendMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8792,7 +8717,7 @@ func (ec *executionContext) _Mutation_createNotification(ctx context.Context, fi
 	}
 	res := resTmp.(*model.Notification)
 	fc.Result = res
-	return ec.marshalNNotification2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res)
+	return ec.marshalNNotification2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createNotification(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8889,10 +8814,10 @@ func (ec *executionContext) _Mutation_getUnreadNotifications(ctx context.Context
 	}
 	res := resTmp.([]*model.Notification)
 	fc.Result = res
-	return ec.marshalNNotification2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNotificationᚄ(ctx, field.Selections, res)
+	return ec.marshalNNotification2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNotificationᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_getUnreadNotifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_getUnreadNotifications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -8975,7 +8900,7 @@ func (ec *executionContext) _Mutation_blockUser(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.BlockNotification)
 	fc.Result = res
-	return ec.marshalNBlockNotification2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐBlockNotification(ctx, field.Selections, res)
+	return ec.marshalNBlockNotification2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐBlockNotification(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_blockUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9053,7 +8978,7 @@ func (ec *executionContext) _Mutation_createPost(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createPost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9157,7 +9082,7 @@ func (ec *executionContext) _Mutation_createComment(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9325,7 +9250,7 @@ func (ec *executionContext) _Mutation_likePost(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.PostLike)
 	fc.Result = res
-	return ec.marshalOPostLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
+	return ec.marshalOPostLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_likePost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9403,7 +9328,7 @@ func (ec *executionContext) _Mutation_likecomment(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.CommentLike)
 	fc.Result = res
-	return ec.marshalOCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐCommentLike(ctx, field.Selections, res)
+	return ec.marshalOCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐCommentLike(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_likecomment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9556,7 +9481,7 @@ func (ec *executionContext) _Mutation_createReel(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Reel)
 	fc.Result = res
-	return ec.marshalNReel2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReel(ctx, field.Selections, res)
+	return ec.marshalNReel2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createReel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9655,7 +9580,7 @@ func (ec *executionContext) _Mutation_createReelComment(ctx context.Context, fie
 	}
 	res := resTmp.(*model.ReelComment)
 	fc.Result = res
-	return ec.marshalNReelComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelComment(ctx, field.Selections, res)
+	return ec.marshalNReelComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createReelComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9754,7 +9679,7 @@ func (ec *executionContext) _Mutation_likeReel(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.ReelLike)
 	fc.Result = res
-	return ec.marshalNReelLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelLike(ctx, field.Selections, res)
+	return ec.marshalNReelLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelLike(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_likeReel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9835,7 +9760,7 @@ func (ec *executionContext) _Mutation_likeReelComment(ctx context.Context, field
 	}
 	res := resTmp.(*model.ReelCommentLike)
 	fc.Result = res
-	return ec.marshalNReelCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelCommentLike(ctx, field.Selections, res)
+	return ec.marshalNReelCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelCommentLike(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_likeReelComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9916,7 +9841,7 @@ func (ec *executionContext) _Mutation_createTextStory(ctx context.Context, field
 	}
 	res := resTmp.(*model.Story)
 	fc.Result = res
-	return ec.marshalNStory2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐStory(ctx, field.Selections, res)
+	return ec.marshalNStory2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐStory(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createTextStory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10007,7 +9932,7 @@ func (ec *executionContext) _Mutation_createImageStory(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.Story)
 	fc.Result = res
-	return ec.marshalNStory2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐStory(ctx, field.Selections, res)
+	return ec.marshalNStory2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐStory(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createImageStory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10081,7 +10006,7 @@ func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Notification_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Notification_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Notification",
 		Field:      field,
@@ -10125,7 +10050,7 @@ func (ec *executionContext) _Notification_message(ctx context.Context, field gra
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Notification_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Notification_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Notification",
 		Field:      field,
@@ -10166,10 +10091,10 @@ func (ec *executionContext) _Notification_user(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Notification_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Notification_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Notification",
 		Field:      field,
@@ -10248,10 +10173,10 @@ func (ec *executionContext) _Notification_sender(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Notification_sender(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Notification_sender(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Notification",
 		Field:      field,
@@ -10333,7 +10258,7 @@ func (ec *executionContext) _Notification_seen(ctx context.Context, field graphq
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Notification_seen(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Notification_seen(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Notification",
 		Field:      field,
@@ -10374,7 +10299,7 @@ func (ec *executionContext) _Notification_postId(ctx context.Context, field grap
 	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Notification_postId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Notification_postId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Notification",
 		Field:      field,
@@ -10415,7 +10340,7 @@ func (ec *executionContext) _Notification_reelId(ctx context.Context, field grap
 	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Notification_reelId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Notification_reelId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Notification",
 		Field:      field,
@@ -10456,7 +10381,7 @@ func (ec *executionContext) _Notification_storyId(ctx context.Context, field gra
 	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Notification_storyId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Notification_storyId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Notification",
 		Field:      field,
@@ -10497,7 +10422,7 @@ func (ec *executionContext) _Notification_groupId(ctx context.Context, field gra
 	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Notification_groupId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Notification_groupId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Notification",
 		Field:      field,
@@ -10541,7 +10466,7 @@ func (ec *executionContext) _Notification_createdAt(ctx context.Context, field g
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Notification_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Notification_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Notification",
 		Field:      field,
@@ -10585,7 +10510,7 @@ func (ec *executionContext) _Post_id(ctx context.Context, field graphql.Collecte
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -10626,10 +10551,10 @@ func (ec *executionContext) _Post_user(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -10711,7 +10636,7 @@ func (ec *executionContext) _Post_content(ctx context.Context, field graphql.Col
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_content(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -10755,7 +10680,7 @@ func (ec *executionContext) _Post_privacy(ctx context.Context, field graphql.Col
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_privacy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_privacy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -10793,10 +10718,10 @@ func (ec *executionContext) _Post_visibility(ctx context.Context, field graphql.
 	}
 	res := resTmp.([]*model.PostVisibility)
 	fc.Result = res
-	return ec.marshalOPostVisibility2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPostVisibility(ctx, field.Selections, res)
+	return ec.marshalOPostVisibility2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPostVisibility(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_visibility(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_visibility(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -10840,10 +10765,10 @@ func (ec *executionContext) _Post_postTags(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.PostTag)
 	fc.Result = res
-	return ec.marshalOPostTag2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPostTag(ctx, field.Selections, res)
+	return ec.marshalOPostTag2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPostTag(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_postTags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_postTags(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -10893,7 +10818,7 @@ func (ec *executionContext) _Post_likeCount(ctx context.Context, field graphql.C
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_likeCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_likeCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -10937,7 +10862,7 @@ func (ec *executionContext) _Post_commentCount(ctx context.Context, field graphq
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_commentCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_commentCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -10981,7 +10906,7 @@ func (ec *executionContext) _Post_shareCount(ctx context.Context, field graphql.
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_shareCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_shareCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -11019,10 +10944,10 @@ func (ec *executionContext) _Post_group(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.Group)
 	fc.Result = res
-	return ec.marshalOGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
+	return ec.marshalOGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_group(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_group(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -11091,7 +11016,7 @@ func (ec *executionContext) _Post_files(ctx context.Context, field graphql.Colle
 	return ec.marshalOString2ᚕᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_files(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -11129,10 +11054,10 @@ func (ec *executionContext) _Post_likes(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.([]*model.PostLike)
 	fc.Result = res
-	return ec.marshalOPostLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
+	return ec.marshalOPostLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_likes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_likes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -11176,10 +11101,10 @@ func (ec *executionContext) _Post_comments(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_comments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_comments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -11244,7 +11169,7 @@ func (ec *executionContext) _Post_liked(ctx context.Context, field graphql.Colle
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_liked(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_liked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -11288,7 +11213,7 @@ func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.C
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Post_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
@@ -11332,7 +11257,7 @@ func (ec *executionContext) _PostLike_postId(ctx context.Context, field graphql.
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PostLike_postId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PostLike_postId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PostLike",
 		Field:      field,
@@ -11373,10 +11298,10 @@ func (ec *executionContext) _PostLike_user(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PostLike_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PostLike_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PostLike",
 		Field:      field,
@@ -11458,7 +11383,7 @@ func (ec *executionContext) _PostTag_postId(ctx context.Context, field graphql.C
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PostTag_postId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PostTag_postId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PostTag",
 		Field:      field,
@@ -11499,10 +11424,10 @@ func (ec *executionContext) _PostTag_user(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PostTag_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PostTag_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PostTag",
 		Field:      field,
@@ -11584,7 +11509,7 @@ func (ec *executionContext) _PostVisibility_postId(ctx context.Context, field gr
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PostVisibility_postId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PostVisibility_postId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PostVisibility",
 		Field:      field,
@@ -11625,10 +11550,10 @@ func (ec *executionContext) _PostVisibility_user(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PostVisibility_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PostVisibility_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PostVisibility",
 		Field:      field,
@@ -11724,7 +11649,7 @@ func (ec *executionContext) _Query_getUser(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11814,10 +11739,10 @@ func (ec *executionContext) _Query_getUsers(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getUsers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -12026,10 +11951,10 @@ func (ec *executionContext) _Query_getAuth(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getAuth(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getAuth(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -12125,7 +12050,7 @@ func (ec *executionContext) _Query_getFilteredUsers(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getFilteredUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12235,10 +12160,10 @@ func (ec *executionContext) _Query_getFriends(ctx context.Context, field graphql
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getFriends(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getFriends(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -12334,10 +12259,10 @@ func (ec *executionContext) _Query_getFriendRequests(ctx context.Context, field 
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getFriendRequests(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getFriendRequests(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -12433,7 +12358,7 @@ func (ec *executionContext) _Query_getUserFriends(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getUserFriends(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12543,7 +12468,7 @@ func (ec *executionContext) _Query_getUserMutuals(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getUserMutuals(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12653,10 +12578,10 @@ func (ec *executionContext) _Query_getPeopleMightKnow(ctx context.Context, field
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getPeopleMightKnow(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getPeopleMightKnow(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -12752,7 +12677,7 @@ func (ec *executionContext) _Query_getGroup(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.Group)
 	fc.Result = res
-	return ec.marshalOGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
+	return ec.marshalOGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getGroup(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12852,7 +12777,7 @@ func (ec *executionContext) _Query_getGroupInvite(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getGroupInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12962,10 +12887,10 @@ func (ec *executionContext) _Query_getGroups(ctx context.Context, field graphql.
 	}
 	res := resTmp.([]*model.Group)
 	fc.Result = res
-	return ec.marshalOGroup2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
+	return ec.marshalOGroup2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getGroups(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getGroups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -13051,10 +12976,10 @@ func (ec *executionContext) _Query_getJoinedGroups(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.Group)
 	fc.Result = res
-	return ec.marshalOGroup2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
+	return ec.marshalOGroup2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getJoinedGroups(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getJoinedGroups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -13140,7 +13065,7 @@ func (ec *executionContext) _Query_getGroupFiles(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.GroupFile)
 	fc.Result = res
-	return ec.marshalOGroupFile2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroupFile(ctx, field.Selections, res)
+	return ec.marshalOGroupFile2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroupFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getGroupFiles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13228,7 +13153,7 @@ func (ec *executionContext) _Query_getJoinRequests(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.Member)
 	fc.Result = res
-	return ec.marshalOMember2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
+	return ec.marshalOMember2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getJoinRequests(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13312,7 +13237,7 @@ func (ec *executionContext) _Query_getFilteredGroups(ctx context.Context, field 
 	}
 	res := resTmp.([]*model.Group)
 	fc.Result = res
-	return ec.marshalOGroup2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
+	return ec.marshalOGroup2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getFilteredGroups(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13412,10 +13337,10 @@ func (ec *executionContext) _Query_getConversations(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.Conversation)
 	fc.Result = res
-	return ec.marshalOConversation2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐConversation(ctx, field.Selections, res)
+	return ec.marshalOConversation2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐConversation(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getConversations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getConversations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -13427,8 +13352,6 @@ func (ec *executionContext) fieldContext_Query_getConversations(ctx context.Cont
 				return ec.fieldContext_Conversation_id(ctx, field)
 			case "users":
 				return ec.fieldContext_Conversation_users(ctx, field)
-			case "group":
-				return ec.fieldContext_Conversation_group(ctx, field)
 			case "messages":
 				return ec.fieldContext_Conversation_messages(ctx, field)
 			}
@@ -13486,10 +13409,10 @@ func (ec *executionContext) _Query_getNotifications(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.Notification)
 	fc.Result = res
-	return ec.marshalNNotification2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNotificationᚄ(ctx, field.Selections, res)
+	return ec.marshalNNotification2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNotificationᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getNotifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getNotifications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -13569,7 +13492,7 @@ func (ec *executionContext) _Query_getPost(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getPost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13673,7 +13596,7 @@ func (ec *executionContext) _Query_getPosts(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getPosts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13777,7 +13700,7 @@ func (ec *executionContext) _Query_getGroupPosts(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getGroupPosts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13881,7 +13804,7 @@ func (ec *executionContext) _Query_getCommentPost(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getCommentPost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13977,7 +13900,7 @@ func (ec *executionContext) _Query_getFilteredPosts(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getFilteredPosts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14081,7 +14004,7 @@ func (ec *executionContext) _Query_getGroupHomePosts(ctx context.Context, field 
 	}
 	res := resTmp.([]*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getGroupHomePosts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14188,7 +14111,7 @@ func (ec *executionContext) _Query_getReels(ctx context.Context, field graphql.C
 	return ec.marshalOID2ᚕᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getReels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getReels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -14249,7 +14172,7 @@ func (ec *executionContext) _Query_getReel(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.Reel)
 	fc.Result = res
-	return ec.marshalNReel2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReel(ctx, field.Selections, res)
+	return ec.marshalNReel2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReel(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getReel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14348,7 +14271,7 @@ func (ec *executionContext) _Query_getReelComments(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.ReelComment)
 	fc.Result = res
-	return ec.marshalNReelComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelComment(ctx, field.Selections, res)
+	return ec.marshalNReelComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getReelComments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14444,7 +14367,7 @@ func (ec *executionContext) _Query_getStories(ctx context.Context, field graphql
 	}
 	res := resTmp.([]*model.Story)
 	fc.Result = res
-	return ec.marshalOStory2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐStory(ctx, field.Selections, res)
+	return ec.marshalOStory2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐStory(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getStories(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14532,10 +14455,10 @@ func (ec *executionContext) _Query_getUserWithStories(ctx context.Context, field
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getUserWithStories(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_getUserWithStories(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -14688,7 +14611,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -14746,7 +14669,7 @@ func (ec *executionContext) _Reel_id(ctx context.Context, field graphql.Collecte
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Reel_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Reel_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Reel",
 		Field:      field,
@@ -14787,10 +14710,10 @@ func (ec *executionContext) _Reel_user(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Reel_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Reel_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Reel",
 		Field:      field,
@@ -14872,7 +14795,7 @@ func (ec *executionContext) _Reel_content(ctx context.Context, field graphql.Col
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Reel_content(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Reel_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Reel",
 		Field:      field,
@@ -14916,7 +14839,7 @@ func (ec *executionContext) _Reel_video(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Reel_video(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Reel_video(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Reel",
 		Field:      field,
@@ -14960,7 +14883,7 @@ func (ec *executionContext) _Reel_likeCount(ctx context.Context, field graphql.C
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Reel_likeCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Reel_likeCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Reel",
 		Field:      field,
@@ -15004,7 +14927,7 @@ func (ec *executionContext) _Reel_commentCount(ctx context.Context, field graphq
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Reel_commentCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Reel_commentCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Reel",
 		Field:      field,
@@ -15048,7 +14971,7 @@ func (ec *executionContext) _Reel_shareCount(ctx context.Context, field graphql.
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Reel_shareCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Reel_shareCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Reel",
 		Field:      field,
@@ -15086,10 +15009,10 @@ func (ec *executionContext) _Reel_likes(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.([]*model.ReelLike)
 	fc.Result = res
-	return ec.marshalOReelLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelLike(ctx, field.Selections, res)
+	return ec.marshalOReelLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelLike(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Reel_likes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Reel_likes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Reel",
 		Field:      field,
@@ -15133,10 +15056,10 @@ func (ec *executionContext) _Reel_comments(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.ReelComment)
 	fc.Result = res
-	return ec.marshalOReelComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelComment(ctx, field.Selections, res)
+	return ec.marshalOReelComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelComment(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Reel_comments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Reel_comments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Reel",
 		Field:      field,
@@ -15201,7 +15124,7 @@ func (ec *executionContext) _Reel_liked(ctx context.Context, field graphql.Colle
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Reel_liked(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Reel_liked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Reel",
 		Field:      field,
@@ -15245,7 +15168,7 @@ func (ec *executionContext) _Reel_createdAt(ctx context.Context, field graphql.C
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Reel_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Reel_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Reel",
 		Field:      field,
@@ -15289,7 +15212,7 @@ func (ec *executionContext) _ReelComment_id(ctx context.Context, field graphql.C
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelComment_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelComment_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelComment",
 		Field:      field,
@@ -15330,10 +15253,10 @@ func (ec *executionContext) _ReelComment_user(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelComment_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelComment_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelComment",
 		Field:      field,
@@ -15415,7 +15338,7 @@ func (ec *executionContext) _ReelComment_content(ctx context.Context, field grap
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelComment_content(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelComment_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelComment",
 		Field:      field,
@@ -15459,7 +15382,7 @@ func (ec *executionContext) _ReelComment_likeCount(ctx context.Context, field gr
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelComment_likeCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelComment_likeCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelComment",
 		Field:      field,
@@ -15503,7 +15426,7 @@ func (ec *executionContext) _ReelComment_replyCount(ctx context.Context, field g
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelComment_replyCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelComment_replyCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelComment",
 		Field:      field,
@@ -15541,10 +15464,10 @@ func (ec *executionContext) _ReelComment_parentReel(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Reel)
 	fc.Result = res
-	return ec.marshalOReel2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReel(ctx, field.Selections, res)
+	return ec.marshalOReel2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReel(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelComment_parentReel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelComment_parentReel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelComment",
 		Field:      field,
@@ -15606,10 +15529,10 @@ func (ec *executionContext) _ReelComment_parentComment(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.ReelComment)
 	fc.Result = res
-	return ec.marshalOReelComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelComment(ctx, field.Selections, res)
+	return ec.marshalOReelComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelComment(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelComment_parentComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelComment_parentComment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelComment",
 		Field:      field,
@@ -15671,10 +15594,10 @@ func (ec *executionContext) _ReelComment_likes(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.ReelCommentLike)
 	fc.Result = res
-	return ec.marshalOReelCommentLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelCommentLike(ctx, field.Selections, res)
+	return ec.marshalOReelCommentLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelCommentLike(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelComment_likes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelComment_likes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelComment",
 		Field:      field,
@@ -15718,10 +15641,10 @@ func (ec *executionContext) _ReelComment_comments(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.ReelComment)
 	fc.Result = res
-	return ec.marshalOReelComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelComment(ctx, field.Selections, res)
+	return ec.marshalOReelComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelComment(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelComment_comments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelComment_comments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelComment",
 		Field:      field,
@@ -15786,7 +15709,7 @@ func (ec *executionContext) _ReelComment_liked(ctx context.Context, field graphq
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelComment_liked(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelComment_liked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelComment",
 		Field:      field,
@@ -15830,7 +15753,7 @@ func (ec *executionContext) _ReelComment_createdAt(ctx context.Context, field gr
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelComment_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelComment_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelComment",
 		Field:      field,
@@ -15874,7 +15797,7 @@ func (ec *executionContext) _ReelCommentLike_reelCommentId(ctx context.Context, 
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelCommentLike_reelCommentId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelCommentLike_reelCommentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelCommentLike",
 		Field:      field,
@@ -15915,10 +15838,10 @@ func (ec *executionContext) _ReelCommentLike_user(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelCommentLike_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelCommentLike_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelCommentLike",
 		Field:      field,
@@ -16000,7 +15923,7 @@ func (ec *executionContext) _ReelLike_reelId(ctx context.Context, field graphql.
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelLike_reelId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelLike_reelId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelLike",
 		Field:      field,
@@ -16041,10 +15964,10 @@ func (ec *executionContext) _ReelLike_user(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ReelLike_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ReelLike_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ReelLike",
 		Field:      field,
@@ -16126,7 +16049,7 @@ func (ec *executionContext) _Story_id(ctx context.Context, field graphql.Collect
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Story_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Story_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Story",
 		Field:      field,
@@ -16167,10 +16090,10 @@ func (ec *executionContext) _Story_user(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Story_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Story_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Story",
 		Field:      field,
@@ -16249,7 +16172,7 @@ func (ec *executionContext) _Story_image(ctx context.Context, field graphql.Coll
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Story_image(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Story_image(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Story",
 		Field:      field,
@@ -16290,7 +16213,7 @@ func (ec *executionContext) _Story_text(ctx context.Context, field graphql.Colle
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Story_text(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Story_text(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Story",
 		Field:      field,
@@ -16331,7 +16254,7 @@ func (ec *executionContext) _Story_font(ctx context.Context, field graphql.Colle
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Story_font(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Story_font(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Story",
 		Field:      field,
@@ -16372,7 +16295,7 @@ func (ec *executionContext) _Story_color(ctx context.Context, field graphql.Coll
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Story_color(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Story_color(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Story",
 		Field:      field,
@@ -16416,7 +16339,7 @@ func (ec *executionContext) _Story_createdAt(ctx context.Context, field graphql.
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Story_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Story_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Story",
 		Field:      field,
@@ -16462,7 +16385,7 @@ func (ec *executionContext) _Subscription_viewConversation(ctx context.Context, 
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalOMessage2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalOMessage2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -16542,7 +16465,7 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -16586,7 +16509,7 @@ func (ec *executionContext) _User_firstName(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_firstName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_firstName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -16630,7 +16553,7 @@ func (ec *executionContext) _User_lastName(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_lastName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_lastName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -16674,7 +16597,7 @@ func (ec *executionContext) _User_username(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_username(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -16718,7 +16641,7 @@ func (ec *executionContext) _User_email(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_email(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -16762,7 +16685,7 @@ func (ec *executionContext) _User_dob(ctx context.Context, field graphql.Collect
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_dob(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_dob(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -16806,7 +16729,7 @@ func (ec *executionContext) _User_gender(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_gender(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_gender(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -16850,7 +16773,7 @@ func (ec *executionContext) _User_active(ctx context.Context, field graphql.Coll
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_active(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_active(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -16891,7 +16814,7 @@ func (ec *executionContext) _User_profile(ctx context.Context, field graphql.Col
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_profile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_profile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -16932,7 +16855,7 @@ func (ec *executionContext) _User_background(ctx context.Context, field graphql.
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_background(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_background(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -16976,7 +16899,7 @@ func (ec *executionContext) _User_createdAt(ctx context.Context, field graphql.C
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -17014,10 +16937,10 @@ func (ec *executionContext) _User_posts(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.([]*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_posts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_posts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -17093,7 +17016,7 @@ func (ec *executionContext) _User_friendCount(ctx context.Context, field graphql
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_friendCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_friendCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -17137,7 +17060,7 @@ func (ec *executionContext) _User_mutualCount(ctx context.Context, field graphql
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_mutualCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_mutualCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -17181,7 +17104,7 @@ func (ec *executionContext) _User_notificationCount(ctx context.Context, field g
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_notificationCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_notificationCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -17225,7 +17148,7 @@ func (ec *executionContext) _User_friended(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_friended(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_friended(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -17269,7 +17192,7 @@ func (ec *executionContext) _User_blocked(ctx context.Context, field graphql.Col
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_blocked(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_blocked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -17313,7 +17236,7 @@ func (ec *executionContext) _User_theme(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_theme(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_theme(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -17357,7 +17280,7 @@ func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -17398,7 +17321,7 @@ func (ec *executionContext) ___Directive_description(ctx context.Context, field 
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -17442,7 +17365,7 @@ func (ec *executionContext) ___Directive_locations(ctx context.Context, field gr
 	return ec.marshalN__DirectiveLocation2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_locations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_locations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -17486,7 +17409,7 @@ func (ec *executionContext) ___Directive_args(ctx context.Context, field graphql
 	return ec.marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_args(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_args(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -17540,7 +17463,7 @@ func (ec *executionContext) ___Directive_isRepeatable(ctx context.Context, field
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_isRepeatable(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_isRepeatable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -17584,7 +17507,7 @@ func (ec *executionContext) ___EnumValue_name(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___EnumValue_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___EnumValue_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__EnumValue",
 		Field:      field,
@@ -17625,7 +17548,7 @@ func (ec *executionContext) ___EnumValue_description(ctx context.Context, field 
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___EnumValue_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___EnumValue_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__EnumValue",
 		Field:      field,
@@ -17669,7 +17592,7 @@ func (ec *executionContext) ___EnumValue_isDeprecated(ctx context.Context, field
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___EnumValue_isDeprecated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___EnumValue_isDeprecated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__EnumValue",
 		Field:      field,
@@ -17710,7 +17633,7 @@ func (ec *executionContext) ___EnumValue_deprecationReason(ctx context.Context, 
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___EnumValue_deprecationReason(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___EnumValue_deprecationReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__EnumValue",
 		Field:      field,
@@ -17754,7 +17677,7 @@ func (ec *executionContext) ___Field_name(ctx context.Context, field graphql.Col
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -17795,7 +17718,7 @@ func (ec *executionContext) ___Field_description(ctx context.Context, field grap
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -17839,7 +17762,7 @@ func (ec *executionContext) ___Field_args(ctx context.Context, field graphql.Col
 	return ec.marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_args(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_args(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -17893,7 +17816,7 @@ func (ec *executionContext) ___Field_type(ctx context.Context, field graphql.Col
 	return ec.marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -17959,7 +17882,7 @@ func (ec *executionContext) ___Field_isDeprecated(ctx context.Context, field gra
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_isDeprecated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_isDeprecated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -18000,7 +17923,7 @@ func (ec *executionContext) ___Field_deprecationReason(ctx context.Context, fiel
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_deprecationReason(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_deprecationReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -18044,7 +17967,7 @@ func (ec *executionContext) ___InputValue_name(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___InputValue_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___InputValue_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__InputValue",
 		Field:      field,
@@ -18085,7 +18008,7 @@ func (ec *executionContext) ___InputValue_description(ctx context.Context, field
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___InputValue_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___InputValue_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__InputValue",
 		Field:      field,
@@ -18129,7 +18052,7 @@ func (ec *executionContext) ___InputValue_type(ctx context.Context, field graphq
 	return ec.marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___InputValue_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___InputValue_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__InputValue",
 		Field:      field,
@@ -18192,7 +18115,7 @@ func (ec *executionContext) ___InputValue_defaultValue(ctx context.Context, fiel
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___InputValue_defaultValue(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___InputValue_defaultValue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__InputValue",
 		Field:      field,
@@ -18233,7 +18156,7 @@ func (ec *executionContext) ___Schema_description(ctx context.Context, field gra
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -18277,7 +18200,7 @@ func (ec *executionContext) ___Schema_types(ctx context.Context, field graphql.C
 	return ec.marshalN__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_types(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_types(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -18343,7 +18266,7 @@ func (ec *executionContext) ___Schema_queryType(ctx context.Context, field graph
 	return ec.marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_queryType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_queryType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -18406,7 +18329,7 @@ func (ec *executionContext) ___Schema_mutationType(ctx context.Context, field gr
 	return ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_mutationType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_mutationType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -18469,7 +18392,7 @@ func (ec *executionContext) ___Schema_subscriptionType(ctx context.Context, fiel
 	return ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_subscriptionType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_subscriptionType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -18535,7 +18458,7 @@ func (ec *executionContext) ___Schema_directives(ctx context.Context, field grap
 	return ec.marshalN__Directive2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirectiveᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_directives(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_directives(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -18591,7 +18514,7 @@ func (ec *executionContext) ___Type_kind(ctx context.Context, field graphql.Coll
 	return ec.marshalN__TypeKind2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -18632,7 +18555,7 @@ func (ec *executionContext) ___Type_name(ctx context.Context, field graphql.Coll
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -18673,7 +18596,7 @@ func (ec *executionContext) ___Type_description(ctx context.Context, field graph
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -18780,7 +18703,7 @@ func (ec *executionContext) ___Type_interfaces(ctx context.Context, field graphq
 	return ec.marshalO__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_interfaces(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_interfaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -18843,7 +18766,7 @@ func (ec *executionContext) ___Type_possibleTypes(ctx context.Context, field gra
 	return ec.marshalO__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_possibleTypes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_possibleTypes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -18968,7 +18891,7 @@ func (ec *executionContext) ___Type_inputFields(ctx context.Context, field graph
 	return ec.marshalO__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_inputFields(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_inputFields(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -19019,7 +18942,7 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 	return ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_ofType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_ofType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -19082,7 +19005,7 @@ func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field gr
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -19114,8 +19037,6 @@ func (ec *executionContext) unmarshalInputFriendInput(ctx context.Context, obj i
 		}
 		switch k {
 		case "sender":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sender"))
 			data, err := ec.unmarshalNID2string(ctx, v)
 			if err != nil {
@@ -19123,8 +19044,6 @@ func (ec *executionContext) unmarshalInputFriendInput(ctx context.Context, obj i
 			}
 			it.Sender = data
 		case "receiver":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("receiver"))
 			data, err := ec.unmarshalNID2string(ctx, v)
 			if err != nil {
@@ -19152,8 +19071,6 @@ func (ec *executionContext) unmarshalInputNewComment(ctx context.Context, obj in
 		}
 		switch k {
 		case "content":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19161,8 +19078,6 @@ func (ec *executionContext) unmarshalInputNewComment(ctx context.Context, obj in
 			}
 			it.Content = data
 		case "parentPost":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentPost"))
 			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
@@ -19170,8 +19085,6 @@ func (ec *executionContext) unmarshalInputNewComment(ctx context.Context, obj in
 			}
 			it.ParentPost = data
 		case "parentComment":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentComment"))
 			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
@@ -19199,8 +19112,6 @@ func (ec *executionContext) unmarshalInputNewGroup(ctx context.Context, obj inte
 		}
 		switch k {
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19208,8 +19119,6 @@ func (ec *executionContext) unmarshalInputNewGroup(ctx context.Context, obj inte
 			}
 			it.Name = data
 		case "about":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("about"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19217,8 +19126,6 @@ func (ec *executionContext) unmarshalInputNewGroup(ctx context.Context, obj inte
 			}
 			it.About = data
 		case "privacy":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19246,8 +19153,6 @@ func (ec *executionContext) unmarshalInputNewGroupFile(ctx context.Context, obj 
 		}
 		switch k {
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19255,8 +19160,6 @@ func (ec *executionContext) unmarshalInputNewGroupFile(ctx context.Context, obj 
 			}
 			it.Name = data
 		case "type":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19264,8 +19167,6 @@ func (ec *executionContext) unmarshalInputNewGroupFile(ctx context.Context, obj 
 			}
 			it.Type = data
 		case "url":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19293,8 +19194,6 @@ func (ec *executionContext) unmarshalInputNewImageStory(ctx context.Context, obj
 		}
 		switch k {
 		case "image":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19322,8 +19221,6 @@ func (ec *executionContext) unmarshalInputNewNotification(ctx context.Context, o
 		}
 		switch k {
 		case "message":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19331,8 +19228,6 @@ func (ec *executionContext) unmarshalInputNewNotification(ctx context.Context, o
 			}
 			it.Message = data
 		case "userId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
 			data, err := ec.unmarshalNID2string(ctx, v)
 			if err != nil {
@@ -19340,8 +19235,6 @@ func (ec *executionContext) unmarshalInputNewNotification(ctx context.Context, o
 			}
 			it.UserID = data
 		case "postId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
 			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
@@ -19349,8 +19242,6 @@ func (ec *executionContext) unmarshalInputNewNotification(ctx context.Context, o
 			}
 			it.PostID = data
 		case "reelId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reelId"))
 			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
@@ -19358,8 +19249,6 @@ func (ec *executionContext) unmarshalInputNewNotification(ctx context.Context, o
 			}
 			it.ReelID = data
 		case "storyId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storyId"))
 			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
@@ -19367,8 +19256,6 @@ func (ec *executionContext) unmarshalInputNewNotification(ctx context.Context, o
 			}
 			it.StoryID = data
 		case "groupId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("groupId"))
 			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
@@ -19396,8 +19283,6 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 		}
 		switch k {
 		case "content":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19405,8 +19290,6 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 			}
 			it.Content = data
 		case "privacy":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19414,8 +19297,6 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 			}
 			it.Privacy = data
 		case "files":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("files"))
 			data, err := ec.unmarshalOString2ᚕᚖstring(ctx, v)
 			if err != nil {
@@ -19423,8 +19304,6 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 			}
 			it.Files = data
 		case "groupId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("groupId"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -19432,8 +19311,6 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 			}
 			it.GroupID = data
 		case "visibility":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("visibility"))
 			data, err := ec.unmarshalOString2ᚕᚖstring(ctx, v)
 			if err != nil {
@@ -19441,8 +19318,6 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 			}
 			it.Visibility = data
 		case "tags":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
 			data, err := ec.unmarshalOString2ᚕᚖstring(ctx, v)
 			if err != nil {
@@ -19470,8 +19345,6 @@ func (ec *executionContext) unmarshalInputNewReel(ctx context.Context, obj inter
 		}
 		switch k {
 		case "content":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19479,8 +19352,6 @@ func (ec *executionContext) unmarshalInputNewReel(ctx context.Context, obj inter
 			}
 			it.Content = data
 		case "video":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("video"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19508,8 +19379,6 @@ func (ec *executionContext) unmarshalInputNewReelComment(ctx context.Context, ob
 		}
 		switch k {
 		case "content":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19517,8 +19386,6 @@ func (ec *executionContext) unmarshalInputNewReelComment(ctx context.Context, ob
 			}
 			it.Content = data
 		case "parentReel":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentReel"))
 			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
@@ -19526,8 +19393,6 @@ func (ec *executionContext) unmarshalInputNewReelComment(ctx context.Context, ob
 			}
 			it.ParentReel = data
 		case "parentComment":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentComment"))
 			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
@@ -19555,8 +19420,6 @@ func (ec *executionContext) unmarshalInputNewTextStory(ctx context.Context, obj 
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19564,8 +19427,6 @@ func (ec *executionContext) unmarshalInputNewTextStory(ctx context.Context, obj 
 			}
 			it.Text = data
 		case "font":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("font"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19573,8 +19434,6 @@ func (ec *executionContext) unmarshalInputNewTextStory(ctx context.Context, obj 
 			}
 			it.Font = data
 		case "color":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("color"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19602,8 +19461,6 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 		}
 		switch k {
 		case "firstName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("firstName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19611,8 +19468,6 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 			}
 			it.FirstName = data
 		case "lastName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19620,8 +19475,6 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 			}
 			it.LastName = data
 		case "username":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19629,8 +19482,6 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 			}
 			it.Username = data
 		case "email":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19638,8 +19489,6 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 			}
 			it.Email = data
 		case "password":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19647,8 +19496,6 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 			}
 			it.Password = data
 		case "dob":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dob"))
 			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
 			if err != nil {
@@ -19656,8 +19503,6 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 			}
 			it.Dob = data
 		case "gender":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gender"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19685,8 +19530,6 @@ func (ec *executionContext) unmarshalInputPagination(ctx context.Context, obj in
 		}
 		switch k {
 		case "start":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("start"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -19694,8 +19537,6 @@ func (ec *executionContext) unmarshalInputPagination(ctx context.Context, obj in
 			}
 			it.Start = data
 		case "limit":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -19723,8 +19564,6 @@ func (ec *executionContext) unmarshalInputUpdateUser(ctx context.Context, obj in
 		}
 		switch k {
 		case "firstName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("firstName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19732,8 +19571,6 @@ func (ec *executionContext) unmarshalInputUpdateUser(ctx context.Context, obj in
 			}
 			it.FirstName = data
 		case "lastName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19741,8 +19578,6 @@ func (ec *executionContext) unmarshalInputUpdateUser(ctx context.Context, obj in
 			}
 			it.LastName = data
 		case "password":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19750,8 +19585,6 @@ func (ec *executionContext) unmarshalInputUpdateUser(ctx context.Context, obj in
 			}
 			it.Password = data
 		case "gender":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gender"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -19919,7 +19752,7 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 		case "liked":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -20042,8 +19875,6 @@ func (ec *executionContext) _Conversation(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "group":
-			out.Values[i] = ec._Conversation_group(ctx, field, obj)
 		case "messages":
 			out.Values[i] = ec._Conversation_messages(ctx, field, obj)
 		default:
@@ -21003,7 +20834,7 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 		case "group":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21042,7 +20873,7 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 		case "liked":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21254,7 +21085,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getUser":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21273,7 +21104,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getUsers":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21358,7 +21189,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getFilteredUsers":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21377,7 +21208,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getFriends":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21396,7 +21227,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getFriendRequests":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21415,7 +21246,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getUserFriends":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21434,7 +21265,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getUserMutuals":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21453,7 +21284,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getPeopleMightKnow":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21472,7 +21303,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getGroup":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21491,7 +21322,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getGroupInvite":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21510,7 +21341,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getGroups":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21529,7 +21360,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getJoinedGroups":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21548,7 +21379,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getGroupFiles":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21567,7 +21398,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getJoinRequests":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21586,7 +21417,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getFilteredGroups":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21605,7 +21436,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getConversations":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21646,7 +21477,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getPost":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21665,7 +21496,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getPosts":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21684,7 +21515,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getGroupPosts":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21703,7 +21534,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getCommentPost":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21722,7 +21553,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getFilteredPosts":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21741,7 +21572,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getGroupHomePosts":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21760,7 +21591,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getReels":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21823,7 +21654,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getStories":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21842,7 +21673,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "getUserWithStories":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -22076,7 +21907,7 @@ func (ec *executionContext) _ReelComment(ctx context.Context, sel ast.SelectionS
 		case "comments":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -22109,7 +21940,7 @@ func (ec *executionContext) _ReelComment(ctx context.Context, sel ast.SelectionS
 		case "liked":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -22959,11 +22790,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNBlockNotification2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐBlockNotification(ctx context.Context, sel ast.SelectionSet, v model.BlockNotification) graphql.Marshaler {
+func (ec *executionContext) marshalNBlockNotification2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐBlockNotification(ctx context.Context, sel ast.SelectionSet, v model.BlockNotification) graphql.Marshaler {
 	return ec._BlockNotification(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBlockNotification2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐBlockNotification(ctx context.Context, sel ast.SelectionSet, v *model.BlockNotification) graphql.Marshaler {
+func (ec *executionContext) marshalNBlockNotification2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐBlockNotification(ctx context.Context, sel ast.SelectionSet, v *model.BlockNotification) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -22988,7 +22819,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNConversationUsers2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐConversationUsersᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ConversationUsers) graphql.Marshaler {
+func (ec *executionContext) marshalNConversationUsers2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐConversationUsersᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ConversationUsers) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -23012,7 +22843,7 @@ func (ec *executionContext) marshalNConversationUsers2ᚕᚖgithubᚗcomᚋyahke
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNConversationUsers2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐConversationUsers(ctx, sel, v[i])
+			ret[i] = ec.marshalNConversationUsers2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐConversationUsers(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23032,7 +22863,7 @@ func (ec *executionContext) marshalNConversationUsers2ᚕᚖgithubᚗcomᚋyahke
 	return ret
 }
 
-func (ec *executionContext) marshalNConversationUsers2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐConversationUsers(ctx context.Context, sel ast.SelectionSet, v *model.ConversationUsers) graphql.Marshaler {
+func (ec *executionContext) marshalNConversationUsers2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐConversationUsers(ctx context.Context, sel ast.SelectionSet, v *model.ConversationUsers) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23042,16 +22873,16 @@ func (ec *executionContext) marshalNConversationUsers2ᚖgithubᚗcomᚋyahkerob
 	return ec._ConversationUsers(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNFriendInput2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐFriendInput(ctx context.Context, v interface{}) (model.FriendInput, error) {
+func (ec *executionContext) unmarshalNFriendInput2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐFriendInput(ctx context.Context, v interface{}) (model.FriendInput, error) {
 	res, err := ec.unmarshalInputFriendInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGroup2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroup(ctx context.Context, sel ast.SelectionSet, v model.Group) graphql.Marshaler {
+func (ec *executionContext) marshalNGroup2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroup(ctx context.Context, sel ast.SelectionSet, v model.Group) graphql.Marshaler {
 	return ec._Group(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroup(ctx context.Context, sel ast.SelectionSet, v *model.Group) graphql.Marshaler {
+func (ec *executionContext) marshalNGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroup(ctx context.Context, sel ast.SelectionSet, v *model.Group) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23061,11 +22892,11 @@ func (ec *executionContext) marshalNGroup2ᚖgithubᚗcomᚋyahkerobertkertasnya
 	return ec._Group(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNGroupFile2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroupFile(ctx context.Context, sel ast.SelectionSet, v model.GroupFile) graphql.Marshaler {
+func (ec *executionContext) marshalNGroupFile2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroupFile(ctx context.Context, sel ast.SelectionSet, v model.GroupFile) graphql.Marshaler {
 	return ec._GroupFile(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNGroupFile2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroupFile(ctx context.Context, sel ast.SelectionSet, v *model.GroupFile) graphql.Marshaler {
+func (ec *executionContext) marshalNGroupFile2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroupFile(ctx context.Context, sel ast.SelectionSet, v *model.GroupFile) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23105,11 +22936,11 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNMember2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMember(ctx context.Context, sel ast.SelectionSet, v model.Member) graphql.Marshaler {
+func (ec *executionContext) marshalNMember2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMember(ctx context.Context, sel ast.SelectionSet, v model.Member) graphql.Marshaler {
 	return ec._Member(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMember2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMemberᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Member) graphql.Marshaler {
+func (ec *executionContext) marshalNMember2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMemberᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Member) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -23133,7 +22964,7 @@ func (ec *executionContext) marshalNMember2ᚕᚖgithubᚗcomᚋyahkerobertkerta
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMember(ctx, sel, v[i])
+			ret[i] = ec.marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMember(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23153,7 +22984,7 @@ func (ec *executionContext) marshalNMember2ᚕᚖgithubᚗcomᚋyahkerobertkerta
 	return ret
 }
 
-func (ec *executionContext) marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMember(ctx context.Context, sel ast.SelectionSet, v *model.Member) graphql.Marshaler {
+func (ec *executionContext) marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMember(ctx context.Context, sel ast.SelectionSet, v *model.Member) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23163,61 +22994,61 @@ func (ec *executionContext) marshalNMember2ᚖgithubᚗcomᚋyahkerobertkertasny
 	return ec._Member(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNNewComment2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewComment(ctx context.Context, v interface{}) (model.NewComment, error) {
+func (ec *executionContext) unmarshalNNewComment2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewComment(ctx context.Context, v interface{}) (model.NewComment, error) {
 	res, err := ec.unmarshalInputNewComment(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewGroup2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewGroup(ctx context.Context, v interface{}) (model.NewGroup, error) {
+func (ec *executionContext) unmarshalNNewGroup2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewGroup(ctx context.Context, v interface{}) (model.NewGroup, error) {
 	res, err := ec.unmarshalInputNewGroup(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewGroupFile2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewGroupFile(ctx context.Context, v interface{}) (model.NewGroupFile, error) {
+func (ec *executionContext) unmarshalNNewGroupFile2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewGroupFile(ctx context.Context, v interface{}) (model.NewGroupFile, error) {
 	res, err := ec.unmarshalInputNewGroupFile(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewImageStory2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewImageStory(ctx context.Context, v interface{}) (model.NewImageStory, error) {
+func (ec *executionContext) unmarshalNNewImageStory2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewImageStory(ctx context.Context, v interface{}) (model.NewImageStory, error) {
 	res, err := ec.unmarshalInputNewImageStory(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewNotification2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewNotification(ctx context.Context, v interface{}) (model.NewNotification, error) {
+func (ec *executionContext) unmarshalNNewNotification2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewNotification(ctx context.Context, v interface{}) (model.NewNotification, error) {
 	res, err := ec.unmarshalInputNewNotification(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewPost2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewPost(ctx context.Context, v interface{}) (model.NewPost, error) {
+func (ec *executionContext) unmarshalNNewPost2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewPost(ctx context.Context, v interface{}) (model.NewPost, error) {
 	res, err := ec.unmarshalInputNewPost(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewReel2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewReel(ctx context.Context, v interface{}) (model.NewReel, error) {
+func (ec *executionContext) unmarshalNNewReel2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewReel(ctx context.Context, v interface{}) (model.NewReel, error) {
 	res, err := ec.unmarshalInputNewReel(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewReelComment2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewReelComment(ctx context.Context, v interface{}) (model.NewReelComment, error) {
+func (ec *executionContext) unmarshalNNewReelComment2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewReelComment(ctx context.Context, v interface{}) (model.NewReelComment, error) {
 	res, err := ec.unmarshalInputNewReelComment(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewTextStory2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewTextStory(ctx context.Context, v interface{}) (model.NewTextStory, error) {
+func (ec *executionContext) unmarshalNNewTextStory2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewTextStory(ctx context.Context, v interface{}) (model.NewTextStory, error) {
 	res, err := ec.unmarshalInputNewTextStory(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewUser2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNewUser(ctx context.Context, v interface{}) (model.NewUser, error) {
+func (ec *executionContext) unmarshalNNewUser2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNewUser(ctx context.Context, v interface{}) (model.NewUser, error) {
 	res, err := ec.unmarshalInputNewUser(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNNotification2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalNNotification2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v model.Notification) graphql.Marshaler {
 	return ec._Notification(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNNotification2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNotificationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalNNotification2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNotificationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Notification) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -23241,7 +23072,7 @@ func (ec *executionContext) marshalNNotification2ᚕᚖgithubᚗcomᚋyahkerober
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNNotification2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNotification(ctx, sel, v[i])
+			ret[i] = ec.marshalNNotification2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNotification(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23261,7 +23092,7 @@ func (ec *executionContext) marshalNNotification2ᚕᚖgithubᚗcomᚋyahkerober
 	return ret
 }
 
-func (ec *executionContext) marshalNNotification2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v *model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalNNotification2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v *model.Notification) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23271,16 +23102,16 @@ func (ec *executionContext) marshalNNotification2ᚖgithubᚗcomᚋyahkerobertke
 	return ec._Notification(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPagination(ctx context.Context, v interface{}) (model.Pagination, error) {
+func (ec *executionContext) unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPagination(ctx context.Context, v interface{}) (model.Pagination, error) {
 	res, err := ec.unmarshalInputPagination(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNReel2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReel(ctx context.Context, sel ast.SelectionSet, v model.Reel) graphql.Marshaler {
+func (ec *executionContext) marshalNReel2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReel(ctx context.Context, sel ast.SelectionSet, v model.Reel) graphql.Marshaler {
 	return ec._Reel(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNReel2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReel(ctx context.Context, sel ast.SelectionSet, v *model.Reel) graphql.Marshaler {
+func (ec *executionContext) marshalNReel2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReel(ctx context.Context, sel ast.SelectionSet, v *model.Reel) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23290,11 +23121,11 @@ func (ec *executionContext) marshalNReel2ᚖgithubᚗcomᚋyahkerobertkertasnya�
 	return ec._Reel(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNReelComment2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelComment(ctx context.Context, sel ast.SelectionSet, v model.ReelComment) graphql.Marshaler {
+func (ec *executionContext) marshalNReelComment2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelComment(ctx context.Context, sel ast.SelectionSet, v model.ReelComment) graphql.Marshaler {
 	return ec._ReelComment(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNReelComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelComment(ctx context.Context, sel ast.SelectionSet, v []*model.ReelComment) graphql.Marshaler {
+func (ec *executionContext) marshalNReelComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelComment(ctx context.Context, sel ast.SelectionSet, v []*model.ReelComment) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -23318,7 +23149,7 @@ func (ec *executionContext) marshalNReelComment2ᚕᚖgithubᚗcomᚋyahkerobert
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOReelComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelComment(ctx, sel, v[i])
+			ret[i] = ec.marshalOReelComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelComment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23332,7 +23163,7 @@ func (ec *executionContext) marshalNReelComment2ᚕᚖgithubᚗcomᚋyahkerobert
 	return ret
 }
 
-func (ec *executionContext) marshalNReelComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelComment(ctx context.Context, sel ast.SelectionSet, v *model.ReelComment) graphql.Marshaler {
+func (ec *executionContext) marshalNReelComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelComment(ctx context.Context, sel ast.SelectionSet, v *model.ReelComment) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23342,11 +23173,11 @@ func (ec *executionContext) marshalNReelComment2ᚖgithubᚗcomᚋyahkerobertker
 	return ec._ReelComment(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNReelCommentLike2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelCommentLike(ctx context.Context, sel ast.SelectionSet, v model.ReelCommentLike) graphql.Marshaler {
+func (ec *executionContext) marshalNReelCommentLike2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelCommentLike(ctx context.Context, sel ast.SelectionSet, v model.ReelCommentLike) graphql.Marshaler {
 	return ec._ReelCommentLike(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNReelCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelCommentLike(ctx context.Context, sel ast.SelectionSet, v *model.ReelCommentLike) graphql.Marshaler {
+func (ec *executionContext) marshalNReelCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelCommentLike(ctx context.Context, sel ast.SelectionSet, v *model.ReelCommentLike) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23356,11 +23187,11 @@ func (ec *executionContext) marshalNReelCommentLike2ᚖgithubᚗcomᚋyahkerober
 	return ec._ReelCommentLike(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNReelLike2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelLike(ctx context.Context, sel ast.SelectionSet, v model.ReelLike) graphql.Marshaler {
+func (ec *executionContext) marshalNReelLike2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelLike(ctx context.Context, sel ast.SelectionSet, v model.ReelLike) graphql.Marshaler {
 	return ec._ReelLike(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNReelLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelLike(ctx context.Context, sel ast.SelectionSet, v *model.ReelLike) graphql.Marshaler {
+func (ec *executionContext) marshalNReelLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelLike(ctx context.Context, sel ast.SelectionSet, v *model.ReelLike) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23370,11 +23201,11 @@ func (ec *executionContext) marshalNReelLike2ᚖgithubᚗcomᚋyahkerobertkertas
 	return ec._ReelLike(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStory2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐStory(ctx context.Context, sel ast.SelectionSet, v model.Story) graphql.Marshaler {
+func (ec *executionContext) marshalNStory2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐStory(ctx context.Context, sel ast.SelectionSet, v model.Story) graphql.Marshaler {
 	return ec._Story(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStory2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐStory(ctx context.Context, sel ast.SelectionSet, v *model.Story) graphql.Marshaler {
+func (ec *executionContext) marshalNStory2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐStory(ctx context.Context, sel ast.SelectionSet, v *model.Story) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23414,16 +23245,16 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) unmarshalNUpdateUser2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUpdateUser(ctx context.Context, v interface{}) (model.UpdateUser, error) {
+func (ec *executionContext) unmarshalNUpdateUser2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUpdateUser(ctx context.Context, v interface{}) (model.UpdateUser, error) {
 	res, err := ec.unmarshalInputUpdateUser(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23712,7 +23543,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v []*model.Comment) graphql.Marshaler {
+func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v []*model.Comment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -23739,7 +23570,7 @@ func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋyahkerobertkert
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐComment(ctx, sel, v[i])
+			ret[i] = ec.marshalOComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐComment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23753,14 +23584,14 @@ func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋyahkerobertkert
 	return ret
 }
 
-func (ec *executionContext) marshalOComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v *model.Comment) graphql.Marshaler {
+func (ec *executionContext) marshalOComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v *model.Comment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Comment(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCommentLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐCommentLike(ctx context.Context, sel ast.SelectionSet, v []*model.CommentLike) graphql.Marshaler {
+func (ec *executionContext) marshalOCommentLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐCommentLike(ctx context.Context, sel ast.SelectionSet, v []*model.CommentLike) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -23787,7 +23618,7 @@ func (ec *executionContext) marshalOCommentLike2ᚕᚖgithubᚗcomᚋyahkerobert
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐCommentLike(ctx, sel, v[i])
+			ret[i] = ec.marshalOCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐCommentLike(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23801,14 +23632,14 @@ func (ec *executionContext) marshalOCommentLike2ᚕᚖgithubᚗcomᚋyahkerobert
 	return ret
 }
 
-func (ec *executionContext) marshalOCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐCommentLike(ctx context.Context, sel ast.SelectionSet, v *model.CommentLike) graphql.Marshaler {
+func (ec *executionContext) marshalOCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐCommentLike(ctx context.Context, sel ast.SelectionSet, v *model.CommentLike) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CommentLike(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOConversation2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐConversation(ctx context.Context, sel ast.SelectionSet, v []*model.Conversation) graphql.Marshaler {
+func (ec *executionContext) marshalOConversation2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐConversation(ctx context.Context, sel ast.SelectionSet, v []*model.Conversation) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -23835,7 +23666,7 @@ func (ec *executionContext) marshalOConversation2ᚕᚖgithubᚗcomᚋyahkerober
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOConversation2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐConversation(ctx, sel, v[i])
+			ret[i] = ec.marshalOConversation2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐConversation(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23849,21 +23680,21 @@ func (ec *executionContext) marshalOConversation2ᚕᚖgithubᚗcomᚋyahkerober
 	return ret
 }
 
-func (ec *executionContext) marshalOConversation2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐConversation(ctx context.Context, sel ast.SelectionSet, v *model.Conversation) graphql.Marshaler {
+func (ec *executionContext) marshalOConversation2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐConversation(ctx context.Context, sel ast.SelectionSet, v *model.Conversation) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Conversation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOFriend2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐFriend(ctx context.Context, sel ast.SelectionSet, v *model.Friend) graphql.Marshaler {
+func (ec *executionContext) marshalOFriend2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐFriend(ctx context.Context, sel ast.SelectionSet, v *model.Friend) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Friend(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOGroup2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroup(ctx context.Context, sel ast.SelectionSet, v []*model.Group) graphql.Marshaler {
+func (ec *executionContext) marshalOGroup2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroup(ctx context.Context, sel ast.SelectionSet, v []*model.Group) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -23890,7 +23721,7 @@ func (ec *executionContext) marshalOGroup2ᚕᚖgithubᚗcomᚋyahkerobertkertas
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroup(ctx, sel, v[i])
+			ret[i] = ec.marshalOGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroup(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23904,14 +23735,14 @@ func (ec *executionContext) marshalOGroup2ᚕᚖgithubᚗcomᚋyahkerobertkertas
 	return ret
 }
 
-func (ec *executionContext) marshalOGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroup(ctx context.Context, sel ast.SelectionSet, v *model.Group) graphql.Marshaler {
+func (ec *executionContext) marshalOGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroup(ctx context.Context, sel ast.SelectionSet, v *model.Group) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Group(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOGroupFile2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroupFile(ctx context.Context, sel ast.SelectionSet, v []*model.GroupFile) graphql.Marshaler {
+func (ec *executionContext) marshalOGroupFile2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroupFile(ctx context.Context, sel ast.SelectionSet, v []*model.GroupFile) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -23938,7 +23769,7 @@ func (ec *executionContext) marshalOGroupFile2ᚕᚖgithubᚗcomᚋyahkerobertke
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOGroupFile2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroupFile(ctx, sel, v[i])
+			ret[i] = ec.marshalOGroupFile2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroupFile(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23952,7 +23783,7 @@ func (ec *executionContext) marshalOGroupFile2ᚕᚖgithubᚗcomᚋyahkerobertke
 	return ret
 }
 
-func (ec *executionContext) marshalOGroupFile2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐGroupFile(ctx context.Context, sel ast.SelectionSet, v *model.GroupFile) graphql.Marshaler {
+func (ec *executionContext) marshalOGroupFile2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroupFile(ctx context.Context, sel ast.SelectionSet, v *model.GroupFile) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24007,7 +23838,7 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalOMember2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMember(ctx context.Context, sel ast.SelectionSet, v []*model.Member) graphql.Marshaler {
+func (ec *executionContext) marshalOMember2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMember(ctx context.Context, sel ast.SelectionSet, v []*model.Member) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24034,7 +23865,7 @@ func (ec *executionContext) marshalOMember2ᚕᚖgithubᚗcomᚋyahkerobertkerta
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMember(ctx, sel, v[i])
+			ret[i] = ec.marshalOMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMember(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24048,14 +23879,14 @@ func (ec *executionContext) marshalOMember2ᚕᚖgithubᚗcomᚋyahkerobertkerta
 	return ret
 }
 
-func (ec *executionContext) marshalOMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMember(ctx context.Context, sel ast.SelectionSet, v *model.Member) graphql.Marshaler {
+func (ec *executionContext) marshalOMember2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMember(ctx context.Context, sel ast.SelectionSet, v *model.Member) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Member(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOMessage2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v []*model.Message) graphql.Marshaler {
+func (ec *executionContext) marshalOMessage2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v []*model.Message) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24082,7 +23913,7 @@ func (ec *executionContext) marshalOMessage2ᚕᚖgithubᚗcomᚋyahkerobertkert
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOMessage2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMessage(ctx, sel, v[i])
+			ret[i] = ec.marshalOMessage2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMessage(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24096,14 +23927,14 @@ func (ec *executionContext) marshalOMessage2ᚕᚖgithubᚗcomᚋyahkerobertkert
 	return ret
 }
 
-func (ec *executionContext) marshalOMessage2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v *model.Message) graphql.Marshaler {
+func (ec *executionContext) marshalOMessage2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v *model.Message) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Message(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v []*model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v []*model.Post) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24130,7 +23961,7 @@ func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasn
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPost(ctx, sel, v[i])
+			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPost(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24144,14 +23975,14 @@ func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋyahkerobertkertasn
 	return ret
 }
 
-func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Post(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPostLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPostLike(ctx context.Context, sel ast.SelectionSet, v []*model.PostLike) graphql.Marshaler {
+func (ec *executionContext) marshalOPostLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPostLike(ctx context.Context, sel ast.SelectionSet, v []*model.PostLike) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24178,7 +24009,7 @@ func (ec *executionContext) marshalOPostLike2ᚕᚖgithubᚗcomᚋyahkerobertker
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPostLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPostLike(ctx, sel, v[i])
+			ret[i] = ec.marshalOPostLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPostLike(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24192,14 +24023,14 @@ func (ec *executionContext) marshalOPostLike2ᚕᚖgithubᚗcomᚋyahkerobertker
 	return ret
 }
 
-func (ec *executionContext) marshalOPostLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPostLike(ctx context.Context, sel ast.SelectionSet, v *model.PostLike) graphql.Marshaler {
+func (ec *executionContext) marshalOPostLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPostLike(ctx context.Context, sel ast.SelectionSet, v *model.PostLike) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PostLike(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPostTag2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPostTag(ctx context.Context, sel ast.SelectionSet, v []*model.PostTag) graphql.Marshaler {
+func (ec *executionContext) marshalOPostTag2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPostTag(ctx context.Context, sel ast.SelectionSet, v []*model.PostTag) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24226,7 +24057,7 @@ func (ec *executionContext) marshalOPostTag2ᚕᚖgithubᚗcomᚋyahkerobertkert
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPostTag2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPostTag(ctx, sel, v[i])
+			ret[i] = ec.marshalOPostTag2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPostTag(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24240,14 +24071,14 @@ func (ec *executionContext) marshalOPostTag2ᚕᚖgithubᚗcomᚋyahkerobertkert
 	return ret
 }
 
-func (ec *executionContext) marshalOPostTag2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPostTag(ctx context.Context, sel ast.SelectionSet, v *model.PostTag) graphql.Marshaler {
+func (ec *executionContext) marshalOPostTag2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPostTag(ctx context.Context, sel ast.SelectionSet, v *model.PostTag) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PostTag(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPostVisibility2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPostVisibility(ctx context.Context, sel ast.SelectionSet, v []*model.PostVisibility) graphql.Marshaler {
+func (ec *executionContext) marshalOPostVisibility2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPostVisibility(ctx context.Context, sel ast.SelectionSet, v []*model.PostVisibility) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24274,7 +24105,7 @@ func (ec *executionContext) marshalOPostVisibility2ᚕᚖgithubᚗcomᚋyahkerob
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPostVisibility2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPostVisibility(ctx, sel, v[i])
+			ret[i] = ec.marshalOPostVisibility2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPostVisibility(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24288,21 +24119,21 @@ func (ec *executionContext) marshalOPostVisibility2ᚕᚖgithubᚗcomᚋyahkerob
 	return ret
 }
 
-func (ec *executionContext) marshalOPostVisibility2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐPostVisibility(ctx context.Context, sel ast.SelectionSet, v *model.PostVisibility) graphql.Marshaler {
+func (ec *executionContext) marshalOPostVisibility2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPostVisibility(ctx context.Context, sel ast.SelectionSet, v *model.PostVisibility) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PostVisibility(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOReel2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReel(ctx context.Context, sel ast.SelectionSet, v *model.Reel) graphql.Marshaler {
+func (ec *executionContext) marshalOReel2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReel(ctx context.Context, sel ast.SelectionSet, v *model.Reel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Reel(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOReelComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelComment(ctx context.Context, sel ast.SelectionSet, v []*model.ReelComment) graphql.Marshaler {
+func (ec *executionContext) marshalOReelComment2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelComment(ctx context.Context, sel ast.SelectionSet, v []*model.ReelComment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24329,7 +24160,7 @@ func (ec *executionContext) marshalOReelComment2ᚕᚖgithubᚗcomᚋyahkerobert
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOReelComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelComment(ctx, sel, v[i])
+			ret[i] = ec.marshalOReelComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelComment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24343,14 +24174,14 @@ func (ec *executionContext) marshalOReelComment2ᚕᚖgithubᚗcomᚋyahkerobert
 	return ret
 }
 
-func (ec *executionContext) marshalOReelComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelComment(ctx context.Context, sel ast.SelectionSet, v *model.ReelComment) graphql.Marshaler {
+func (ec *executionContext) marshalOReelComment2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelComment(ctx context.Context, sel ast.SelectionSet, v *model.ReelComment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ReelComment(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOReelCommentLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelCommentLike(ctx context.Context, sel ast.SelectionSet, v []*model.ReelCommentLike) graphql.Marshaler {
+func (ec *executionContext) marshalOReelCommentLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelCommentLike(ctx context.Context, sel ast.SelectionSet, v []*model.ReelCommentLike) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24377,7 +24208,7 @@ func (ec *executionContext) marshalOReelCommentLike2ᚕᚖgithubᚗcomᚋyahkero
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOReelCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelCommentLike(ctx, sel, v[i])
+			ret[i] = ec.marshalOReelCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelCommentLike(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24391,14 +24222,14 @@ func (ec *executionContext) marshalOReelCommentLike2ᚕᚖgithubᚗcomᚋyahkero
 	return ret
 }
 
-func (ec *executionContext) marshalOReelCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelCommentLike(ctx context.Context, sel ast.SelectionSet, v *model.ReelCommentLike) graphql.Marshaler {
+func (ec *executionContext) marshalOReelCommentLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelCommentLike(ctx context.Context, sel ast.SelectionSet, v *model.ReelCommentLike) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ReelCommentLike(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOReelLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelLike(ctx context.Context, sel ast.SelectionSet, v []*model.ReelLike) graphql.Marshaler {
+func (ec *executionContext) marshalOReelLike2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelLike(ctx context.Context, sel ast.SelectionSet, v []*model.ReelLike) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24425,7 +24256,7 @@ func (ec *executionContext) marshalOReelLike2ᚕᚖgithubᚗcomᚋyahkerobertker
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOReelLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelLike(ctx, sel, v[i])
+			ret[i] = ec.marshalOReelLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelLike(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24439,14 +24270,14 @@ func (ec *executionContext) marshalOReelLike2ᚕᚖgithubᚗcomᚋyahkerobertker
 	return ret
 }
 
-func (ec *executionContext) marshalOReelLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐReelLike(ctx context.Context, sel ast.SelectionSet, v *model.ReelLike) graphql.Marshaler {
+func (ec *executionContext) marshalOReelLike2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReelLike(ctx context.Context, sel ast.SelectionSet, v *model.ReelLike) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ReelLike(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOStory2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐStory(ctx context.Context, sel ast.SelectionSet, v []*model.Story) graphql.Marshaler {
+func (ec *executionContext) marshalOStory2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐStory(ctx context.Context, sel ast.SelectionSet, v []*model.Story) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24473,7 +24304,7 @@ func (ec *executionContext) marshalOStory2ᚕᚖgithubᚗcomᚋyahkerobertkertas
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOStory2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐStory(ctx, sel, v[i])
+			ret[i] = ec.marshalOStory2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐStory(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24487,7 +24318,7 @@ func (ec *executionContext) marshalOStory2ᚕᚖgithubᚗcomᚋyahkerobertkertas
 	return ret
 }
 
-func (ec *executionContext) marshalOStory2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐStory(ctx context.Context, sel ast.SelectionSet, v *model.Story) graphql.Marshaler {
+func (ec *executionContext) marshalOStory2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐStory(ctx context.Context, sel ast.SelectionSet, v *model.Story) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24542,7 +24373,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24569,7 +24400,7 @@ func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasn
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24583,7 +24414,7 @@ func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasn
 	return ret
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋTPAWebBackᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

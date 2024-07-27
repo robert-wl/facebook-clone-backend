@@ -68,11 +68,6 @@ func main() {
 	srv.Use(extension.AutomaticPersistedQuery{
 		Cache: lru.New(100),
 	})
-	//srv := handler.NewDefaultServer(graph.NewExecutableSchema(c))
-
-	postgresql.MigrateDatabase()
-
-	//helper.SendVerification("robert.wiliam12345@gmail.com", "12345")
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", srv)
