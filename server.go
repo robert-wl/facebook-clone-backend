@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	cors2 "github.com/rs/cors"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/adapter"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/database"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/resolver"
@@ -40,8 +41,9 @@ func main() {
 	router.Use(middleware.AuthMiddleware)
 
 	c := graph.Config{Resolvers: &resolver.Resolver{
-		DB:    database.GetRedisInstance(),
-		Redis: database.GetRedisInstance(),
+		DB:           database.GetDBInstance(),
+		Redis:        database.GetRedisInstance(),
+		RedisAdapter: adapter.NewRedisCacheAdapter(),
 	}}
 
 	c.Directives.Auth = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
@@ -57,6 +59,8 @@ func main() {
 			},
 		},
 	})
+
+	//database.FakeData()
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})

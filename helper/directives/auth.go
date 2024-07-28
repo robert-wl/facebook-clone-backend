@@ -35,7 +35,7 @@ func AuthDirectives(ctx context.Context, next graphql.Resolver) (res interface{}
 
 	if _, err := client.Get(ctx, fmt.Sprintf(`user:%s`, userId)).Result(); err != nil {
 		var user model.User
-		DB := database.GetRedisInstance()
+		DB := database.GetDBInstance()
 
 		if err := DB.First(&user, "id = ?", userId).Error; err != nil {
 			return nil, err

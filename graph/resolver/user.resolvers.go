@@ -6,11 +6,7 @@ package resolver
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strconv"
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
@@ -78,8 +74,16 @@ func (r *mutationResolver) ActivateUser(ctx context.Context, id string) (*model.
 func (r *mutationResolver) AuthenticateUser(ctx context.Context, email string, password string) (string, error) {
 	var user *model.User
 
-	if err := r.DB.First(&user, "email = ?", email).Error; err != nil {
-		return "", fmt.Errorf("credentials not found")
+	err := r.RedisAdapter.GetOrSet([]string{email}, &user, func() (interface{}, error) {
+		if err := r.DB.First(&user, "email = ?", email).Error; err != nil {
+			return nil, fmt.Errorf("credentials not found")
+		}
+
+		return user, nil
+	}, []string{email})
+
+	if err != nil {
+		return "", err
 	}
 
 	if user.Active == false {
@@ -151,7 +155,9 @@ func (r *mutationResolver) UpdateUserProfile(ctx context.Context, profile string
 		return nil, err
 	}
 
-	r.Redis.Del(ctx, fmt.Sprintf("user:%s", user.Username))
+	if err := r.RedisAdapter.Del(user, []string{user.ID, user.Username, user.Email}); err != nil {
+		return nil, err
+	}
 
 	return user, nil
 }
@@ -165,7 +171,9 @@ func (r *mutationResolver) UpdateUserBackground(ctx context.Context, background 
 		return nil, err
 	}
 
-	r.Redis.Del(ctx, fmt.Sprintf("user:%s", user.Username))
+	if err := r.RedisAdapter.Del(user, []string{user.ID, user.Username, user.Email}); err != nil {
+		return nil, err
+	}
 
 	return user, nil
 }
@@ -190,7 +198,9 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 		return nil, err
 	}
 
-	r.Redis.Del(ctx, fmt.Sprintf("user:%s", user.Username))
+	if err := r.RedisAdapter.Del(user, []string{user.ID, user.Username, user.Email}); err != nil {
+		return nil, err
+	}
 
 	return user, nil
 }
@@ -203,8 +213,10 @@ func (r *mutationResolver) UpdateTheme(ctx context.Context, theme string) (*mode
 	if err := r.DB.First(&user, "id = ?", userID).Update("theme", theme).Error; err != nil {
 		return nil, err
 	}
-	r.Redis.Del(ctx, fmt.Sprintf("user:%s", user.Username))
-	r.Redis.Del(ctx, fmt.Sprintf("user:%s", user.ID))
+
+	if err := r.RedisAdapter.Del(user, []string{user.ID, user.Username, user.Email}); err != nil {
+		return nil, err
+	}
 
 	return user, nil
 }
@@ -217,22 +229,15 @@ func (r *queryResolver) GetUser(ctx context.Context, username string) (*model.Us
 
 	userID := ctx.Value("UserID").(string)
 
-	if serializedUser, err := r.Redis.Get(ctx, fmt.Sprintf(`user:%s`, username)).Result(); err != nil {
-
+	err := r.RedisAdapter.GetOrSet([]string{username}, &user, func() (interface{}, error) {
 		if err := r.DB.First(&user, "username = ?", username).Error; err != nil {
 			return nil, err
 		}
+		return user, nil
+	}, []string{user.Username})
 
-		if serializedUser, err := json.Marshal(user); err != nil {
-			return nil, err
-		} else {
-			r.Redis.Set(ctx, fmt.Sprintf(`user:%s`, username), serializedUser, 10*60*time.Minute)
-		}
-
-	} else {
-		if err := json.Unmarshal([]byte(serializedUser), &user); err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return nil, err
 	}
 
 	subQueryFriend := r.DB.
@@ -266,21 +271,8 @@ func (r *queryResolver) GetUser(ctx context.Context, username string) (*model.Us
 func (r *queryResolver) GetUsers(ctx context.Context) ([]*model.User, error) {
 	var users []*model.User
 
-	if serializedUsers, err := r.Redis.Get(ctx, fmt.Sprintf("users")).Result(); err != nil {
-		if err := r.DB.Find(&users).Error; err != nil {
-			return nil, err
-		}
-
-		if serializedUsers, err := json.Marshal(users); err != nil {
-			return nil, err
-		} else {
-			r.Redis.Set(ctx, fmt.Sprintf("users"), serializedUsers, 60*time.Minute)
-		}
-
-	} else {
-		if err := json.Unmarshal([]byte(serializedUsers), &users); err != nil {
-			return nil, err
-		}
+	if err := r.DB.Find(&users).Error; err != nil {
+		return nil, err
 	}
 
 	return users, nil
@@ -310,22 +302,15 @@ func (r *queryResolver) GetAuth(ctx context.Context) (*model.User, error) {
 
 	userID := ctx.Value("UserID").(string)
 
-	if serializedUser, err := r.Redis.Get(ctx, fmt.Sprintf(`user:%s`, userID)).Result(); err != nil {
-
-		if err := r.DB.First(&user, "id = ?", ctx.Value("UserID")).Error; err != nil {
+	err := r.RedisAdapter.GetOrSet([]string{userID}, &user, func() (interface{}, error) {
+		if err := r.DB.First(&user, "id = ?", userID).Error; err != nil {
 			return nil, err
 		}
+		return user, nil
+	}, []string{userID})
 
-		if serializedUser, err := json.Marshal(user); err != nil {
-			return nil, err
-		} else {
-			r.Redis.Set(ctx, fmt.Sprintf(`user:%s`, userID), serializedUser, 10*60*time.Minute)
-		}
-
-	} else {
-		if err := json.Unmarshal([]byte(serializedUser), &user); err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return nil, err
 	}
 
 	return user, nil
@@ -351,19 +336,18 @@ func (r *queryResolver) GetFilteredUsers(ctx context.Context, filter string, pag
 // FriendCount is the resolver for the friendCount field.
 func (r *userResolver) FriendCount(ctx context.Context, obj *model.User) (int, error) {
 	var friendCount int64
-
 	userID := ctx.Value("UserID").(string)
 
-	if friendCountRedis, err := r.Redis.Get(ctx, fmt.Sprintf("user:%s:friendCount", userID)).Result(); err != nil {
+	err := r.RedisAdapter.GetOrSet([]string{"friend-count", userID}, &friendCount, func() (interface{}, error) {
 		if err := r.DB.Find(&model.Friend{}, "(sender_id = ? or receiver_id = ?) and accepted = true", userID, userID).Count(&friendCount).Error; err != nil {
-			return 0, err
+			return nil, err
 		}
 
-		r.Redis.Set(ctx, fmt.Sprintf("user:%s:friendCount", userID), friendCount, 10*time.Minute)
-	} else {
-		if friendCountInt, err := strconv.Atoi(friendCountRedis); err != nil {
-			return friendCountInt, nil
-		}
+		return int(friendCount), nil
+	}, []string{"friend-count", obj.ID})
+
+	if err != nil {
+		return 0, err
 	}
 
 	return int(friendCount), nil
@@ -375,22 +359,30 @@ func (r *userResolver) MutualCount(ctx context.Context, obj *model.User) (int, e
 	var myFriendIDs []string
 	var mutualCount int64
 
-	if err := r.DB.
-		Model(&model.Friend{}).
-		Where("sender_id = ? OR receiver_id = ?", obj.ID, obj.ID).
-		Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", obj.ID).
-		Find(&friendIDs).Error; err != nil {
-		return 0, err
-	}
-
 	userID := ctx.Value("UserID").(string)
 
-	if err := r.DB.Model(&model.Friend{}).
-		Where("sender_id = ? OR receiver_id = ? AND accepted = ?", userID, userID, true).
-		Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", userID).Find(&myFriendIDs).Error; err != nil {
-		return 0, err
-	}
-	if err := r.DB.Find(&model.User{}, "id IN (?) AND id IN (?)", friendIDs, myFriendIDs).Count(&mutualCount).Error; err != nil {
+	err := r.RedisAdapter.GetOrSet([]string{"mutual-count", userID}, &mutualCount, func() (interface{}, error) {
+		if err := r.DB.
+			Model(&model.Friend{}).
+			Where("sender_id = ? OR receiver_id = ?", obj.ID, obj.ID).
+			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", obj.ID).
+			Find(&friendIDs).Error; err != nil {
+			return nil, err
+		}
+
+		if err := r.DB.Model(&model.Friend{}).
+			Where("sender_id = ? OR receiver_id = ? AND accepted = ?", userID, userID, true).
+			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", userID).Find(&myFriendIDs).Error; err != nil {
+			return nil, err
+		}
+		if err := r.DB.Find(&model.User{}, "id IN (?) AND id IN (?)", friendIDs, myFriendIDs).Count(&mutualCount).Error; err != nil {
+			return nil, err
+		}
+
+		return int(mutualCount), nil
+	}, []string{"mutual-count", userID})
+
+	if err != nil {
 		return 0, err
 	}
 
@@ -403,16 +395,16 @@ func (r *userResolver) NotificationCount(ctx context.Context, obj *model.User) (
 
 	userID := ctx.Value("UserID").(string)
 
-	if notificationCountRedis, err := r.Redis.Get(ctx, fmt.Sprintf("user:%s:notification", userID)).Result(); err != nil {
+	err := r.RedisAdapter.GetOrSet([]string{"notification-count", userID}, &notificationCount, func() (interface{}, error) {
 		if err := r.DB.Find(&model.Notification{}, "user_id = ? AND seen = false", userID).Count(&notificationCount).Error; err != nil {
-			return 0, err
+			return nil, err
 		}
 
-		r.Redis.Set(ctx, fmt.Sprintf("user:%s:notification", userID), notificationCount, 1*time.Minute)
-	} else {
-		if notificationCountInt, err := strconv.Atoi(notificationCountRedis); err != nil {
-			return notificationCountInt, nil
-		}
+		return int(notificationCount), nil
+	}, []string{"notification-count", obj.ID})
+
+	if err != nil {
+		return 0, err
 	}
 
 	return int(notificationCount), nil
@@ -443,22 +435,23 @@ func (r *userResolver) Friended(ctx context.Context, obj *model.User) (string, e
 func (r *userResolver) Blocked(ctx context.Context, obj *model.User) (bool, error) {
 	userID := ctx.Value("UserID").(string)
 
-	if blockedRedis, err := r.Redis.Get(ctx, fmt.Sprintf("user:%s:blocked:%s", userID, obj.ID)).Result(); err != nil {
+	var blocked bool
+	err := r.RedisAdapter.GetOrSet([]string{"blocked", userID, obj.ID}, blocked, func() (interface{}, error) {
 		var blocked *model.BlockNotification
 
-		if err := r.DB.First(&blocked, "sender_id = ? AND receiver_id = ?", obj.ID, userID).Error; err == nil && blocked != nil {
-
-			r.Redis.Set(ctx, fmt.Sprintf("user:%s:blocked:%s", userID, obj.ID), true, 10*time.Minute)
+		if err := r.DB.First(&blocked, "sender_id = ? AND receiver_id = ?", userID, obj.ID).Error; err == nil && blocked != nil {
 			return true, nil
 		}
 
-		r.Redis.Set(ctx, fmt.Sprintf("user:%s:blocked:%s", userID, obj.ID), false, 10*time.Minute)
-	} else {
-		if blockedRedis == "1" {
-			return true, nil
-		}
+		return false, nil
+
+	}, []string{"blocked", userID, obj.ID})
+
+	if err != nil {
+		return false, err
 	}
-	return false, nil
+
+	return blocked, nil
 }
 
 // Mutation returns graph.MutationResolver implementation.

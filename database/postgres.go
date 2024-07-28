@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
 	"gorm.io/driver/postgres"
@@ -29,7 +30,7 @@ func GetDBInstance() *gorm.DB {
 
 func MigrateDatabase() {
 	db := GetDBInstance()
-	db.AutoMigrate(
+	err := db.AutoMigrate(
 		&model.User{},
 		&model.Post{},
 		&model.PostVisibility{},
@@ -53,26 +54,8 @@ func MigrateDatabase() {
 		&model.BlockNotification{},
 	)
 
-	//	&model.Comment{},
-	//	&model.CommentLike{},
-	//	&model.Friend{},
-	//	&model.Story{},
-	//	&model.Message{},
-	//	&model.Reel{},
-	//	&model.ReelLike{},
-	//	&model.ReelComment{},
-	//	&model.ReelCommentLike{},
-	//	&model.Group{},
-	//	&model.Member{},
-	//	&model.GroupFile{},
-	//	&model.Notification{},
-	//	&model.BlockNotification{},
-	//	&model.Conversation{},
-	//	&model.ConversationUsers{},
-	//)
-
-	//fmt.Println(err)
-	//if err != nil {
-	//	panic(err)
-	//}
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
 }

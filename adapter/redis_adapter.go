@@ -8,6 +8,7 @@ import (
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/database"
 	"reflect"
 	"strings"
+	"time"
 )
 
 var ctx = context.Background()
@@ -24,22 +25,75 @@ func NewRedisCacheAdapter() *RedisAdapter {
 	}
 }
 
-func (r *RedisAdapter) Set(value interface{}, cachedAttributes []string) error {
+func (r *RedisAdapter) getGeneralizedType(value interface{}) string {
 	dataType := reflect.TypeOf(value)
 
-	var cacheKey string
-	for _, attr := range cachedAttributes {
+	switch dataType.Kind() {
+	case reflect.Int64:
+		return "int"
+	case reflect.Int32:
+		return "int"
+	case reflect.Int16:
+		return "int"
+	case reflect.Int8:
+		return "int"
+	case reflect.Int:
+		return "int"
+	case reflect.Uint64:
+		return "uint"
+	case reflect.Uint32:
+		return "uint"
+	case reflect.Uint16:
+		return "uint"
+	case reflect.Uint8:
+		return "uint"
+	case reflect.Uint:
+		return "uint"
+	case reflect.Float64:
+		return "float"
+	case reflect.Float32:
+		return "float"
+	case reflect.Bool:
+		return "bool"
+	case reflect.String:
+		return "string"
+	default:
+		return "unknown"
+	}
+}
 
-		var attrValue interface{}
-		if reflect.TypeOf(value).Kind() == reflect.Slice {
-			if reflect.ValueOf(value).Len() == 0 {
-				continue
-			}
-			attrValue = reflect.ValueOf(value).Index(0).FieldByName(attr).Interface()
-		} else {
-			attrValue = reflect.ValueOf(value).Elem().FieldByName(attr).Interface()
+func (r *RedisAdapter) getValueByAttr(value interface{}, attr string) interface{} {
+	if reflect.TypeOf(value).Kind() == reflect.Slice {
+		if reflect.ValueOf(value).Len() == 0 {
+			return nil
 		}
-		cacheKey += fmt.Sprintf(":%v", attrValue)
+		return reflect.ValueOf(value).Index(0).FieldByName(attr).Interface()
+	}
+	return reflect.ValueOf(value).Elem().FieldByName(attr).Interface()
+}
+
+func (r *RedisAdapter) scanKeys(key string) ([]string, error) {
+	var keys []string
+
+	keys, _, err := r.client.Scan(ctx, 0, key, 0).Result()
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(keys) == 0 {
+		return keys, nil
+	}
+
+	return keys, nil
+}
+
+func (r *RedisAdapter) Set(value interface{}, cacheKeys []string) error {
+	dataType := r.getGeneralizedType(reflect.TypeOf(value))
+
+	var cacheKey string
+	for _, key := range cacheKeys {
+		cacheKey += fmt.Sprintf(":%v", key)
 	}
 	key := fmt.Sprintf("%s%s", dataType, cacheKey)
 	key = strings.Replace(key, "[]", "Array", -1)
@@ -50,11 +104,11 @@ func (r *RedisAdapter) Set(value interface{}, cachedAttributes []string) error {
 		return err
 	}
 
-	return r.client.Set(ctx, key, jsonByte, 0).Err()
+	return r.client.Set(ctx, key, jsonByte, 10*60*time.Minute).Err()
 }
 
 func (r *RedisAdapter) Get(keys []string, dest interface{}) error {
-	dataType := reflect.TypeOf(dest)
+	dataType := r.getGeneralizedType(reflect.TypeOf(dest))
 
 	var cacheKey string
 	for _, key := range keys {
@@ -64,18 +118,15 @@ func (r *RedisAdapter) Get(keys []string, dest interface{}) error {
 	key := fmt.Sprintf("%s:%s*", dataType, cacheKey)
 	key = strings.Replace(key, "[]", "Array", -1)
 
-	fmt.Println("KEY", key)
+	keys, err := r.scanKeys(key)
 
-	keys, _, err := r.client.Scan(ctx, 0, key, 0).Result()
 	if err != nil {
 		return err
 	}
 
 	if len(keys) == 0 {
-		return nil
+		return fmt.Errorf("NO KEYS")
 	}
-
-	fmt.Println("GET KEY", keys[0])
 
 	val, err := r.client.Get(ctx, keys[0]).Result()
 	if err != nil {
@@ -99,13 +150,14 @@ func (r *RedisAdapter) Gets(keys []string, dest []interface{}) error {
 
 	key := fmt.Sprintf("%s:%s*", dataType, cacheKey)
 
-	keys, _, err := r.client.Scan(ctx, 0, key, 0).Result()
+	keys, err := r.scanKeys(key)
+
 	if err != nil {
 		return err
 	}
 
 	if len(keys) == 0 {
-		return nil
+		return fmt.Errorf("NO KEYS")
 	}
 
 	val, err := r.client.Get(ctx, keys[0]).Result()
@@ -120,14 +172,11 @@ func (r *RedisAdapter) Gets(keys []string, dest []interface{}) error {
 	return nil
 }
 
-func (r *RedisAdapter) GetOrSet(keys []string, dest interface{}, cacheKeys []string, callback func() (interface{}, error)) error {
-	fmt.Println("GETTING FROM CACHE", keys)
-	if err := r.Get(keys, dest); err == nil && (dest != nil || reflect.ValueOf(dest).Len() > 0) {
-		fmt.Println("RETURNING")
+func (r *RedisAdapter) GetOrSet(keys []string, dest interface{}, callback func() (interface{}, error), cacheKeys []string) error {
+	if errG := r.Get(keys, dest); errG == nil && dest != nil {
 		return nil
 	}
 
-	fmt.Println("GETTING FROM DB", keys)
 	value, err := callback()
 
 	if err != nil {
@@ -167,6 +216,32 @@ func (r *RedisAdapter) GetsOrSet(keys []string, dest []interface{}, cacheKeys []
 	return nil
 }
 
-func (r *RedisAdapter) Del(key string) error {
-	return r.client.Del(ctx, key).Err()
+func (r *RedisAdapter) Del(obj interface{}, deleteVal []string) error {
+	if obj == nil {
+		return nil
+	}
+
+	dataType := r.getGeneralizedType(reflect.TypeOf(obj))
+
+	for _, val := range deleteVal {
+		key := fmt.Sprintf("%s:*%s*", dataType, val)
+
+		keys, err := r.scanKeys(key)
+
+		if err != nil {
+			continue
+		}
+
+		if len(keys) == 0 {
+			continue
+		}
+
+		for _, key := range keys {
+			if err := r.client.Del(ctx, key).Err(); err != nil {
+				continue
+			}
+		}
+	}
+
+	return nil
 }

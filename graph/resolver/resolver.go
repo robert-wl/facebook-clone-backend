@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"github.com/redis/go-redis/v9"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/adapter"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 	"gorm.io/gorm"
 )
@@ -15,5 +16,6 @@ import (
 type Resolver struct {
 	DB                   *gorm.DB
 	Redis                *redis.Client
+	RedisAdapter         *adapter.RedisAdapter
 	ConversationChannels []*model.ConversationChannel
 }
