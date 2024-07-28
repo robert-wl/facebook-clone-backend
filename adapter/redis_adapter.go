@@ -25,41 +25,24 @@ func NewRedisCacheAdapter() *RedisAdapter {
 	}
 }
 
-func (r *RedisAdapter) getGeneralizedType(value interface{}) string {
+func (r *RedisAdapter) getGeneralizedType(value interface{}) reflect.Type {
 	dataType := reflect.TypeOf(value)
 
-	switch dataType.Kind() {
-	case reflect.Int64:
-		return "int"
-	case reflect.Int32:
-		return "int"
-	case reflect.Int16:
-		return "int"
-	case reflect.Int8:
-		return "int"
-	case reflect.Int:
-		return "int"
-	case reflect.Uint64:
-		return "uint"
-	case reflect.Uint32:
-		return "uint"
-	case reflect.Uint16:
-		return "uint"
-	case reflect.Uint8:
-		return "uint"
-	case reflect.Uint:
-		return "uint"
-	case reflect.Float64:
-		return "float"
-	case reflect.Float32:
-		return "float"
-	case reflect.Bool:
-		return "bool"
-	case reflect.String:
-		return "string"
-	default:
-		return "unknown"
+	if dataType.Kind() == reflect.Ptr {
+		dataType = dataType.Elem()
 	}
+
+	if strings.HasPrefix(dataType.String(), "int") {
+		return reflect.TypeOf(int64(0))
+	}
+	if strings.HasPrefix(dataType.String(), "uint") {
+		return reflect.TypeOf(uint(0))
+	}
+	if strings.HasPrefix(dataType.String(), "float") {
+		return reflect.TypeOf(float64(0))
+	}
+	return dataType
+
 }
 
 func (r *RedisAdapter) getValueByAttr(value interface{}, attr string) interface{} {
@@ -89,15 +72,15 @@ func (r *RedisAdapter) scanKeys(key string) ([]string, error) {
 }
 
 func (r *RedisAdapter) Set(value interface{}, cacheKeys []string) error {
-	dataType := r.getGeneralizedType(reflect.TypeOf(value))
+	dataType := r.getGeneralizedType(value)
 
 	var cacheKey string
 	for _, key := range cacheKeys {
 		cacheKey += fmt.Sprintf(":%v", key)
 	}
+
 	key := fmt.Sprintf("%s%s", dataType, cacheKey)
 	key = strings.Replace(key, "[]", "Array", -1)
-
 	jsonByte, err := json.Marshal(value)
 
 	if err != nil {
@@ -108,7 +91,7 @@ func (r *RedisAdapter) Set(value interface{}, cacheKeys []string) error {
 }
 
 func (r *RedisAdapter) Get(keys []string, dest interface{}) error {
-	dataType := r.getGeneralizedType(reflect.TypeOf(dest))
+	dataType := r.getGeneralizedType(dest)
 
 	var cacheKey string
 	for _, key := range keys {
@@ -132,6 +115,8 @@ func (r *RedisAdapter) Get(keys []string, dest interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("KEYS", keys[0], val)
 
 	if err := json.Unmarshal([]byte(val), dest); err != nil {
 		return err
@@ -221,7 +206,7 @@ func (r *RedisAdapter) Del(obj interface{}, deleteVal []string) error {
 		return nil
 	}
 
-	dataType := r.getGeneralizedType(reflect.TypeOf(obj))
+	dataType := r.getGeneralizedType(obj)
 
 	for _, val := range deleteVal {
 		key := fmt.Sprintf("%s:*%s*", dataType, val)

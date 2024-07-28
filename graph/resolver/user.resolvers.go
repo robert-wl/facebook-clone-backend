@@ -310,6 +310,7 @@ func (r *queryResolver) GetAuth(ctx context.Context) (*model.User, error) {
 	}, []string{userID})
 
 	if err != nil {
+		fmt.Println("ERRRO", err.Error())
 		return nil, err
 	}
 
