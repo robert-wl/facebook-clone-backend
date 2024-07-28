@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/database/postgresql"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/database/redis"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/database"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
 	"time"
@@ -32,11 +31,11 @@ func AuthDirectives(ctx context.Context, next graphql.Resolver) (res interface{}
 
 	userId := claims
 
-	client := redis.GetInstance()
+	client := database.GetRedisInstance()
 
 	if _, err := client.Get(ctx, fmt.Sprintf(`user:%s`, userId)).Result(); err != nil {
 		var user model.User
-		DB := postgresql.GetInstance()
+		DB := database.GetRedisInstance()
 
 		if err := DB.First(&user, "id = ?", userId).Error; err != nil {
 			return nil, err

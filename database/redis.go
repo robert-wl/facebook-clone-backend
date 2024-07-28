@@ -1,4 +1,4 @@
-package redis
+package database
 
 import (
 	"github.com/redis/go-redis/v9"
@@ -7,7 +7,7 @@ import (
 
 var client *redis.Client
 
-func GetInstance() *redis.Client {
+func GetRedisInstance() *redis.Client {
 	if client == nil {
 
 		clientCurr := redis.NewClient(&redis.Options{

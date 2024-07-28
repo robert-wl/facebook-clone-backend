@@ -1,4 +1,4 @@
-package postgresql
+package database
 
 import (
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
@@ -11,7 +11,7 @@ var database *gorm.DB
 
 const defaultDatabase = "host=localhost user=postgres password=postgres dbname=facebook port=5432 sslmode=disable TimeZone=Asia/Jakarta"
 
-func GetInstance() *gorm.DB {
+func GetDBInstance() *gorm.DB {
 	if database == nil {
 		dsn := helper.GetDotENVVariable("DATABASE_URL", defaultDatabase)
 
@@ -28,7 +28,7 @@ func GetInstance() *gorm.DB {
 }
 
 func MigrateDatabase() {
-	db := GetInstance()
+	db := GetDBInstance()
 	db.AutoMigrate(
 		&model.User{},
 		&model.Post{},

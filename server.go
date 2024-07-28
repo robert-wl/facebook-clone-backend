@@ -11,8 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	cors2 "github.com/rs/cors"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/database/postgresql"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/database/redis"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/database"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/resolver"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
@@ -41,8 +40,8 @@ func main() {
 	router.Use(middleware.AuthMiddleware)
 
 	c := graph.Config{Resolvers: &resolver.Resolver{
-		DB:    postgresql.GetInstance(),
-		Redis: redis.GetInstance(),
+		DB:    database.GetRedisInstance(),
+		Redis: database.GetRedisInstance(),
 	}}
 
 	c.Directives.Auth = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
