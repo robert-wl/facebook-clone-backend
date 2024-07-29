@@ -81,7 +81,7 @@ func (r *mutationResolver) AuthenticateUser(ctx context.Context, email string, p
 		}
 
 		return user, nil
-	}, []string{email}, time.Minute*60)
+	}, time.Minute*60)
 
 	fmt.Println("USER", user, err)
 	if err != nil {
@@ -236,7 +236,7 @@ func (r *queryResolver) GetUser(ctx context.Context, username string) (*model.Us
 			return nil, err
 		}
 		return user, nil
-	}, []string{user.Username}, time.Minute*60)
+	}, time.Minute*60)
 
 	if err != nil {
 		return nil, err
@@ -309,7 +309,7 @@ func (r *queryResolver) GetAuth(ctx context.Context) (*model.User, error) {
 			return nil, err
 		}
 		return user, nil
-	}, []string{userID}, time.Minute*60)
+	}, time.Minute*60)
 
 	if err != nil {
 		fmt.Println("ERRRO", err.Error())
@@ -349,7 +349,7 @@ func (r *userResolver) FriendCount(ctx context.Context, obj *model.User) (int, e
 		}
 
 		return int(friendCount), nil
-	}, []string{"friend-count", obj.ID}, time.Minute*60)
+	}, time.Minute*60)
 
 	if err != nil {
 		return 0, err
@@ -385,7 +385,7 @@ func (r *userResolver) MutualCount(ctx context.Context, obj *model.User) (int, e
 		}
 
 		return int(mutualCount), nil
-	}, []string{"mutual-count", userID}, time.Minute*60)
+	}, time.Minute*60)
 
 	if err != nil {
 		return 0, err
@@ -406,7 +406,7 @@ func (r *userResolver) NotificationCount(ctx context.Context, obj *model.User) (
 		}
 
 		return int(notificationCount), nil
-	}, []string{"notification-count", obj.ID}, time.Minute*60)
+	}, time.Minute*60)
 
 	if err != nil {
 		return 0, err
@@ -450,7 +450,7 @@ func (r *userResolver) Blocked(ctx context.Context, obj *model.User) (bool, erro
 
 		return false, nil
 
-	}, []string{"blocked", userID, obj.ID}, time.Minute*60)
+	}, time.Minute*60)
 
 	if err != nil {
 		return false, err

@@ -168,7 +168,7 @@ func (r *RedisAdapter) Gets(keys []string, dest []interface{}) error {
 	return nil
 }
 
-func (r *RedisAdapter) GetOrSet(keys []string, dest interface{}, callback func() (interface{}, error), cacheKeys []string, duration time.Duration) error {
+func (r *RedisAdapter) GetOrSet(keys []string, dest interface{}, callback func() (interface{}, error), duration time.Duration) error {
 	if errG := r.Get(keys, dest); errG == nil && dest != nil {
 		fmt.Println("GETTING KEYS", keys, dest)
 		return nil
@@ -181,8 +181,8 @@ func (r *RedisAdapter) GetOrSet(keys []string, dest interface{}, callback func()
 		return err
 	}
 
-	fmt.Println("SETTING KEYS", cacheKeys)
-	if err := r.Set(value, cacheKeys, duration); err != nil {
+	fmt.Println("SETTING KEYS", keys)
+	if err := r.Set(value, keys, duration); err != nil {
 		fmt.Println("SET ERROR", err)
 		return err
 	}
@@ -200,27 +200,30 @@ func (r *RedisAdapter) Del(obj interface{}, deleteVal []string) error {
 		return nil
 	}
 
-	dataType := r.getGeneralizedType(obj)
+	go func() {
+		dataType := r.getGeneralizedType(obj)
 
-	for _, val := range deleteVal {
-		key := fmt.Sprintf("%s:*%s*", dataType, val)
+		for _, val := range deleteVal {
+			key := fmt.Sprintf("%s:*%s*", dataType, val)
 
-		keys, err := r.scanKeys(key, 0)
+			keys, err := r.scanKeys(key, 0)
 
-		if err != nil {
-			continue
-		}
-
-		if len(keys) == 0 {
-			continue
-		}
-
-		for _, key := range keys {
-			if err := r.client.Del(ctx, key).Err(); err != nil {
+			if err != nil {
 				continue
 			}
+
+			if len(keys) == 0 {
+				continue
+			}
+
+			for _, key := range keys {
+				if err := r.client.Del(ctx, key).Err(); err != nil {
+					continue
+				}
+			}
 		}
-	}
+
+	}()
 
 	return nil
 }

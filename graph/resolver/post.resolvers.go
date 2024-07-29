@@ -505,17 +505,17 @@ func (r *postResolver) Liked(ctx context.Context, obj *model.Post) (*bool, error
 
 	userID := ctx.Value("UserID").(string)
 
-	if liked, err := r.Redis.Get(ctx, fmt.Sprintf("post:%s:like:%s", obj.ID, userID)).Result(); err != nil {
+	cacheKey := []string{"post", obj.ID, userID}
+	err := r.RedisAdapter.GetOrSet(cacheKey, &boolean, func() (interface{}, error) {
 		if err := r.DB.First(&postLike, "post_id = ? AND user_id = ?", obj.ID, userID).Error; err == nil && postLike != nil {
 			boolean = true
 		}
 
-		r.Redis.Set(ctx, fmt.Sprintf("post:%s:like:%s", obj.ID, userID), boolean, 10*time.Minute)
+		return &boolean, nil
+	}, time.Minute*5)
 
-	} else {
-		if liked == "true" {
-			boolean = true
-		}
+	if err != nil {
+		return nil, err
 	}
 
 	return &boolean, nil
@@ -565,7 +565,7 @@ func (r *queryResolver) GetPosts(ctx context.Context, pagination model.Paginatio
 		}
 
 		return posts, nil
-	}, []string{"posts", userID, strconv.Itoa(pagination.Start), strconv.Itoa(pagination.Limit)}, time.Minute*5)
+	}, time.Minute*5)
 
 	if err != nil {
 		return nil, err
