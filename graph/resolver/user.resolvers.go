@@ -157,7 +157,7 @@ func (r *mutationResolver) UpdateUserProfile(ctx context.Context, profile string
 		return nil, err
 	}
 
-	if err := r.RedisAdapter.Del(user, []string{user.ID, user.Username, user.Email}); err != nil {
+	if err := r.RedisAdapter.DelType(user, []string{user.ID, user.Username, user.Email}); err != nil {
 		return nil, err
 	}
 
@@ -173,7 +173,7 @@ func (r *mutationResolver) UpdateUserBackground(ctx context.Context, background 
 		return nil, err
 	}
 
-	if err := r.RedisAdapter.Del(user, []string{user.ID, user.Username, user.Email}); err != nil {
+	if err := r.RedisAdapter.DelType(user, []string{user.ID, user.Username, user.Email}); err != nil {
 		return nil, err
 	}
 
@@ -200,7 +200,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 		return nil, err
 	}
 
-	if err := r.RedisAdapter.Del(user, []string{user.ID, user.Username, user.Email}); err != nil {
+	if err := r.RedisAdapter.DelType(user, []string{user.ID, user.Username, user.Email}); err != nil {
 		return nil, err
 	}
 
@@ -216,7 +216,7 @@ func (r *mutationResolver) UpdateTheme(ctx context.Context, theme string) (*mode
 		return nil, err
 	}
 
-	if err := r.RedisAdapter.Del(user, []string{user.ID, user.Username, user.Email}); err != nil {
+	if err := r.RedisAdapter.DelType(user, []string{user.ID, user.Username, user.Email}); err != nil {
 		return nil, err
 	}
 

@@ -28,6 +28,33 @@ func GetDBInstance() *gorm.DB {
 	return database
 }
 
+func DropDatabase() {
+	db := GetDBInstance()
+	db.Migrator().DropTable(
+		&model.User{},
+		&model.Post{},
+		&model.PostVisibility{},
+		&model.PostTag{},
+		&model.PostLike{},
+		&model.Comment{},
+		&model.CommentLike{},
+		&model.Friend{},
+		&model.Story{},
+		&model.Conversation{},
+		&model.Message{},
+		&model.ConversationUsers{},
+		&model.Reel{},
+		&model.ReelLike{},
+		&model.ReelComment{},
+		&model.ReelCommentLike{},
+		&model.Group{},
+		&model.Member{},
+		&model.GroupFile{},
+		&model.Notification{},
+		&model.BlockNotification{},
+	)
+}
+
 func MigrateDatabase() {
 	db := GetDBInstance()
 	err := db.AutoMigrate(

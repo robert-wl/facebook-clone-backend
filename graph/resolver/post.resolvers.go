@@ -19,17 +19,16 @@ import (
 // LikeCount is the resolver for the likeCount field.
 func (r *commentResolver) LikeCount(ctx context.Context, obj *model.Comment) (int, error) {
 	var likeCount int64
-	if likeCountRedis, err := r.Redis.Get(ctx, fmt.Sprintf("comment:%s:like", obj.ID)).Result(); err != nil {
+
+	err := r.RedisAdapter.GetOrSet([]string{"comment", obj.ID, "like"}, &likeCount, func() (interface{}, error) {
 		likeCount = r.DB.Model(obj).Association("Likes").Count()
 
-		r.Redis.Set(ctx, fmt.Sprintf("comment:%s:like", obj.ID), likeCount, 10*time.Minute)
+		return likeCount, nil
 
-	} else {
-		if likeCountRedis, err := strconv.Atoi(likeCountRedis); err != nil {
-			return 0, err
-		} else {
-			return likeCountRedis, nil
-		}
+	}, time.Minute*5)
+
+	if err != nil {
+		return 0, err
 	}
 
 	return int(likeCount), nil
@@ -39,17 +38,15 @@ func (r *commentResolver) LikeCount(ctx context.Context, obj *model.Comment) (in
 func (r *commentResolver) ReplyCount(ctx context.Context, obj *model.Comment) (int, error) {
 	var replyCount int64
 
-	if replyCountRedis, err := r.Redis.Get(ctx, fmt.Sprintf("comment:%s:reply", obj.ID)).Result(); err != nil {
+	err := r.RedisAdapter.GetOrSet([]string{"comment", obj.ID, "reply"}, &replyCount, func() (interface{}, error) {
 		replyCount = r.DB.Model(obj).Association("Comments").Count()
 
-		r.Redis.Set(ctx, fmt.Sprintf("comment:%s:reply", obj.ID), replyCount, 10*time.Minute)
+		return replyCount, nil
 
-	} else {
-		if replyCountRedis, err := strconv.Atoi(replyCountRedis); err != nil {
-			return 0, err
-		} else {
-			return replyCountRedis, nil
-		}
+	}, time.Minute*5)
+
+	if err != nil {
+		return 0, err
 	}
 
 	return int(replyCount), nil
@@ -61,17 +58,19 @@ func (r *commentResolver) Liked(ctx context.Context, obj *model.Comment) (*bool,
 
 	userID := ctx.Value("UserID").(string)
 
-	if liked, err := r.Redis.Get(ctx, fmt.Sprintf("comment:%s:like:%s", obj.ID, userID)).Result(); err != nil {
-		if err := r.DB.First(&model.CommentLike{}, "comment_id = ? AND user_id = ?", obj.ID, userID).Error; err == nil {
+	err := r.RedisAdapter.GetOrSet([]string{"liked", obj.ID, userID}, &boolean, func() (interface{}, error) {
+		var commentLike *model.CommentLike
+
+		if err := r.DB.First(&commentLike, "comment_id = ? AND user_id = ?", obj.ID, userID).Error; err == nil && commentLike != nil {
 			boolean = true
 		}
 
-		r.Redis.Set(ctx, fmt.Sprintf("comment:%s:like:%s", obj.ID, userID), boolean, 10*time.Minute)
+		return &boolean, nil
 
-	} else {
-		if liked == "true" {
-			boolean = true
-		}
+	}, time.Minute*5)
+
+	if err != nil {
+		return nil, err
 	}
 
 	return &boolean, nil
@@ -136,42 +135,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, newPost model.NewPost
 	}
 
 	go func() {
-		var userIDs []string
-
-		subQuery := r.DB.
-			Model(&model.Friend{}).
-			Where("(sender_id = ? OR receiver_id = ? AND accepted = ?)", userID, userID, true).
-			Where("(sender_id = ? OR receiver_id = ? AND accepted = ?)", userID, userID, true).
-			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", userID)
-
-		subQueryBlocked := r.DB.
-			Model(&model.BlockNotification{}).
-			Where("(sender_id = ?)", userID).
-			Select("DISTINCT receiver_id")
-
-		if err := r.DB.
-			Model(&model.User{}).
-			Where("id IN (?) AND id NOT IN (?) AND id != ?", subQuery, subQueryBlocked, userID).
-			Select("id").
-			Find(&userIDs).Error; err != nil {
-			return
-		}
-
-		for _, userId := range userIDs {
-
-			newNotification := &model.NewNotification{
-				Message: fmt.Sprintf("%s %s posted a new post", user.FirstName, user.LastName),
-				UserID:  userId,
-				PostID:  &post.ID,
-				ReelID:  nil,
-				StoryID: nil,
-				GroupID: nil,
-			}
-
-			if _, err := r.CreateNotification(ctx, *newNotification); err != nil {
-				continue
-			}
-		}
+		r.createPostNotification(ctx, *user, post.ID)
 	}()
 
 	return post, nil
@@ -205,65 +169,7 @@ func (r *mutationResolver) CreateComment(ctx context.Context, newComment model.N
 	}
 
 	go func() {
-		var users []*model.User
-
-		subQuery := r.DB.
-			Model(&model.Friend{}).
-			Where("(sender_id = ? OR receiver_id = ? AND accepted = ?)", userID, userID, true).
-			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", userID)
-
-		subQueryBlocked := r.DB.
-			Model(&model.BlockNotification{}).
-			Where("(sender_id = ?)", userID).
-			Select("DISTINCT receiver_id")
-
-		if err := r.DB.Find(&users, "id IN (?) AND id NOT IN (?) AND id != ?", subQuery, subQueryBlocked, userID).Error; err != nil {
-			return
-		}
-
-		if newComment.ParentPost == nil {
-			var comment *model.Comment
-
-			if err := r.DB.First(&comment, "id = ?", newComment.ParentComment).Error; err != nil {
-				return
-			}
-
-			for _, userDat := range users {
-
-				newNotification := &model.NewNotification{
-					Message: fmt.Sprintf("%s %s replied a comment", user.FirstName, user.LastName),
-					UserID:  userDat.ID,
-					PostID:  comment.ParentPostID,
-					ReelID:  nil,
-					StoryID: nil,
-					GroupID: nil,
-				}
-
-				if _, err := r.CreateNotification(ctx, *newNotification); err != nil {
-					continue
-				}
-			}
-			r.Redis.Del(ctx, fmt.Sprintf("comment:%s:reply", *newComment.ParentComment))
-		} else {
-			for _, userDat := range users {
-
-				newNotification := &model.NewNotification{
-					Message: fmt.Sprintf("%s %s commented on a post", user.FirstName, user.LastName),
-					UserID:  userDat.ID,
-					PostID:  newComment.ParentPost,
-					ReelID:  nil,
-					StoryID: nil,
-					GroupID: nil,
-				}
-
-				fmt.Println(newNotification)
-				if _, err := r.CreateNotification(ctx, *newNotification); err != nil {
-					fmt.Println(err)
-					continue
-				}
-			}
-			r.Redis.Del(ctx, fmt.Sprintf("post:%s:comment", *newComment.ParentPost))
-		}
+		r.createCommentNotification(ctx, *user, newComment)
 	}()
 
 	return comment, nil
@@ -302,7 +208,6 @@ func (r *mutationResolver) SharePost(ctx context.Context, userID string, postID 
 	}
 
 	go func() {
-
 		if err := r.DB.First(&user, "id = ?", userID).Error; err != nil {
 			return
 		}
@@ -339,46 +244,7 @@ func (r *mutationResolver) LikePost(ctx context.Context, postID string) (*model.
 		}
 
 		go func() {
-			var userIDs []string
-			var user *model.User
-
-			if err := r.DB.First(&user, "id = ?", userID).Error; err != nil {
-				return
-			}
-
-			subQuery := r.DB.
-				Model(&model.Friend{}).
-				Where("(sender_id = ? OR receiver_id = ? AND accepted = ?)", userID, userID, true).
-				Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", userID)
-
-			subQueryBlocked := r.DB.
-				Model(&model.BlockNotification{}).
-				Where("(sender_id = ?)", userID).
-				Select("DISTINCT receiver_id")
-
-			if err := r.DB.
-				Model(&model.User{}).
-				Where("id IN (?) AND id NOT IN (?) AND id != ?", subQuery, subQueryBlocked, userID).
-				Select("id").
-				Find(&userIDs).Error; err != nil {
-				return
-			}
-
-			for _, userId := range userIDs {
-
-				newNotification := &model.NewNotification{
-					Message: fmt.Sprintf("%s %s liked a post", user.FirstName, user.LastName),
-					UserID:  userId,
-					PostID:  &postID,
-					ReelID:  nil,
-					StoryID: nil,
-					GroupID: nil,
-				}
-
-				if _, err := r.CreateNotification(ctx, *newNotification); err != nil {
-					continue
-				}
-			}
+			r.createLikeNotification(ctx, userID, postID)
 		}()
 
 	} else {
@@ -387,8 +253,8 @@ func (r *mutationResolver) LikePost(ctx context.Context, postID string) (*model.
 		}
 	}
 
-	r.Redis.Del(ctx, fmt.Sprintf("post:%s:like", postID))
-	r.Redis.Del(ctx, fmt.Sprintf("post:%s:like:%s", postID, userID))
+	r.RedisAdapter.Del([]string{"liked", postID, userID})
+	r.RedisAdapter.Del([]string{"post", postID, "like"})
 
 	return postLike, nil
 }
@@ -412,9 +278,8 @@ func (r *mutationResolver) Likecomment(ctx context.Context, commentID string) (*
 		}
 	}
 
-	r.Redis.Del(ctx, fmt.Sprintf("comment:%s:like", commentID))
-	r.Redis.Del(ctx, fmt.Sprintf("comment:%s:like:%s", commentID, userID))
-
+	r.RedisAdapter.Del([]string{"liked", commentID, userID})
+	r.RedisAdapter.Del([]string{"comment", commentID, "like"})
 	return commentLike, nil
 }
 
@@ -431,19 +296,15 @@ func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*stri
 func (r *postResolver) LikeCount(ctx context.Context, obj *model.Post) (int, error) {
 	var count int64
 
-	if likeCountRedis, err := r.Redis.Get(ctx, fmt.Sprintf("post:%s:like", obj.ID)).Result(); err != nil {
-		if err := r.DB.Find(&model.PostLike{}, "post_id = ?", obj.ID).Count(&count).Error; err != nil {
-			return 0, nil
-		}
+	err := r.RedisAdapter.GetOrSet([]string{"post", obj.ID, "like"}, &count, func() (interface{}, error) {
+		count = r.DB.Model(obj).Association("Likes").Count()
 
-		r.Redis.Set(ctx, fmt.Sprintf("post:%s:like", obj.ID), count, 10*time.Minute)
+		return count, nil
 
-	} else {
-		if likeCountRedis, err := strconv.Atoi(likeCountRedis); err != nil {
-			return 0, err
-		} else {
-			return likeCountRedis, nil
-		}
+	}, time.Minute*5)
+
+	if err != nil {
+		return 0, err
 	}
 
 	return int(count), nil
@@ -453,17 +314,15 @@ func (r *postResolver) LikeCount(ctx context.Context, obj *model.Post) (int, err
 func (r *postResolver) CommentCount(ctx context.Context, obj *model.Post) (int, error) {
 	var commentCount int64
 
-	if commentCountRedis, err := r.Redis.Get(ctx, fmt.Sprintf("post:%s:comment", obj.ID)).Result(); err != nil {
+	err := r.RedisAdapter.GetOrSet([]string{"post", obj.ID, "comment"}, &commentCount, func() (interface{}, error) {
 		commentCount = r.DB.Model(obj).Association("Comments").Count()
 
-		r.Redis.Set(ctx, fmt.Sprintf("post:%s:comment", obj.ID), int(commentCount), 10*time.Minute)
+		return commentCount, nil
 
-	} else {
-		if commentCountRedis, err := strconv.Atoi(commentCountRedis); err != nil {
-			return 0, err
-		} else {
-			return commentCountRedis, nil
-		}
+	}, time.Minute*5)
+
+	if err != nil {
+		return 0, err
 	}
 
 	return int(commentCount), nil
@@ -578,14 +437,24 @@ func (r *queryResolver) GetPosts(ctx context.Context, pagination model.Paginatio
 func (r *queryResolver) GetGroupPosts(ctx context.Context, groupID string, pagination model.Pagination) ([]*model.Post, error) {
 	var posts []*model.Post
 
-	if err := r.DB.
-		Order("created_at desc").
-		Preload("User").
-		Preload("Likes").
-		Preload("Comments").
-		Offset(pagination.Start).
-		Limit(pagination.Limit).
-		Find(&posts, "group_id = ?", groupID).Error; err != nil {
+	cacheKey := []string{"group", "posts", groupID, strconv.Itoa(pagination.Start), strconv.Itoa(pagination.Limit)}
+
+	err := r.RedisAdapter.GetOrSet(cacheKey, &posts, func() (interface{}, error) {
+		if err := r.DB.
+			Order("created_at desc").
+			Preload("User").
+			Preload("Likes").
+			Preload("Comments").
+			Offset(pagination.Start).
+			Limit(pagination.Limit).
+			Find(&posts, "group_id = ?", groupID).Error; err != nil {
+			return nil, err
+		}
+
+		return posts, nil
+	}, time.Minute*5)
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -596,12 +465,23 @@ func (r *queryResolver) GetGroupPosts(ctx context.Context, groupID string, pagin
 func (r *queryResolver) GetCommentPost(ctx context.Context, postID string) ([]*model.Comment, error) {
 	var comments []*model.Comment
 
-	if err := r.DB.
-		Preload("User").
-		Preload("Likes").
-		Preload("Comments").
-		Preload("Comments.User").
-		Find(&comments, "parent_post_id = ?", postID).Error; err != nil {
+	cacheKey := []string{"post", postID, "comment"}
+
+	err := r.RedisAdapter.GetOrSet(cacheKey, &comments, func() (interface{}, error) {
+
+		if err := r.DB.
+			Preload("User").
+			Preload("Likes").
+			Preload("Comments").
+			Preload("Comments.User").
+			Find(&comments, "parent_post_id = ?", postID).Error; err != nil {
+			return nil, err
+		}
+
+		return comments, nil
+	}, time.Minute*5)
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -614,36 +494,45 @@ func (r *queryResolver) GetFilteredPosts(ctx context.Context, filter string, pag
 
 	userID := ctx.Value("UserID").(string)
 
-	subQueryFriend := r.DB.
-		Select("*").
-		Where("(sender_id = ? AND receiver_id = posts.user_id) or (sender_id = posts.user_id AND receiver_id = ?)", userID, userID).
-		Table("friends")
+	cacheKey := []string{"posts", filter, strconv.Itoa(pagination.Start), strconv.Itoa(pagination.Limit)}
 
-	subQueryPrivate := r.DB.
-		Select("user_id").
-		Where("(post_id = posts.id)").
-		Table("post_visibilities")
+	err := r.RedisAdapter.GetOrSet(cacheKey, &posts, func() (interface{}, error) {
+		subQueryFriend := r.DB.
+			Select("*").
+			Where("(sender_id = ? AND receiver_id = posts.user_id) or (sender_id = posts.user_id AND receiver_id = ?)", userID, userID).
+			Table("friends")
 
-	subQueryGroup := r.DB.
-		Select("group_id").
-		Where("user_id = ? AND approved = ?", userID, true).
-		Table("members")
+		subQueryPrivate := r.DB.
+			Select("user_id").
+			Where("(post_id = posts.id)").
+			Table("post_visibilities")
 
-	if err := r.DB.
-		Order("created_at desc").
-		Preload("User").
-		Preload("User").
-		Preload("Likes").
-		Preload("Comments").
-		Preload("Visibility.User").
-		Preload("PostTags.User").
-		Offset(pagination.Start).
-		Limit(pagination.Limit).
-		Find(&posts, "id = ? OR ((privacy = ? OR (privacy = ? AND EXISTS(?)) OR (privacy = ? AND ? IN (?)) OR group_id IN (?)) AND LOWER(content) LIKE LOWER(?))", filter, "public", "friend", subQueryFriend, "specific", userID, subQueryPrivate, subQueryGroup, "%"+filter+"%").Error; err != nil {
+		subQueryGroup := r.DB.
+			Select("group_id").
+			Where("user_id = ? AND approved = ?", userID, true).
+			Table("members")
+
+		if err := r.DB.
+			Order("created_at desc").
+			Preload("User").
+			Preload("User").
+			Preload("Likes").
+			Preload("Comments").
+			Preload("Visibility.User").
+			Preload("PostTags.User").
+			Offset(pagination.Start).
+			Limit(pagination.Limit).
+			Find(&posts, "id = ? OR ((privacy = ? OR (privacy = ? AND EXISTS(?)) OR (privacy = ? AND ? IN (?)) OR group_id IN (?)) AND LOWER(content) LIKE LOWER(?))", filter, "public", "friend", subQueryFriend, "specific", userID, subQueryPrivate, subQueryGroup, "%"+filter+"%").Error; err != nil {
+			return nil, err
+		}
+
+		return posts, nil
+	}, time.Minute*5)
+
+	if err != nil {
 		return nil, err
 	}
 
-	//
 	return posts, nil
 }
 
@@ -653,22 +542,32 @@ func (r *queryResolver) GetGroupHomePosts(ctx context.Context, pagination model.
 
 	userID := ctx.Value("UserID").(string)
 
-	subQueryGroup := r.DB.
-		Select("group_id").
-		Where("user_id = ? AND approved = ?", userID, true).
-		Table("members")
+	cacheKey := []string{"post", "group", userID, strconv.Itoa(pagination.Start), strconv.Itoa(pagination.Limit)}
 
-	if err := r.DB.
-		Order("created_at desc").
-		Preload("User").
-		Preload("User").
-		Preload("Likes").
-		Preload("Comments").
-		Preload("Visibility.User").
-		Preload("PostTags.User").
-		Offset(pagination.Start).
-		Limit(pagination.Limit).
-		Find(&posts, "group_id IN (?)", subQueryGroup).Error; err != nil {
+	err := r.RedisAdapter.GetOrSet(cacheKey, &posts, func() (interface{}, error) {
+		subQueryGroup := r.DB.
+			Select("group_id").
+			Where("user_id = ? AND approved = ?", userID, true).
+			Table("members")
+
+		if err := r.DB.
+			Order("created_at desc").
+			Preload("User").
+			Preload("User").
+			Preload("Likes").
+			Preload("Comments").
+			Preload("Visibility.User").
+			Preload("PostTags.User").
+			Offset(pagination.Start).
+			Limit(pagination.Limit).
+			Find(&posts, "group_id IN (?)", subQueryGroup).Error; err != nil {
+			return nil, err
+		}
+
+		return posts, nil
+	}, time.Minute*5)
+
+	if err != nil {
 		return nil, err
 	}
 
