@@ -532,36 +532,45 @@ func (r *queryResolver) GetPosts(ctx context.Context, pagination model.Paginatio
 
 	userID := ctx.Value("UserID").(string)
 
-	subQueryFriend := r.DB.
-		Select("*").
-		Where("(sender_id = ? AND receiver_id = posts.user_id) or (sender_id = posts.user_id AND receiver_id = ?)", userID, userID).
-		Table("friends")
+	cacheKeys := []string{"posts", userID, strconv.Itoa(pagination.Start), strconv.Itoa(pagination.Limit)}
 
-	subQueryPrivate := r.DB.
-		Select("user_id").
-		Where("(post_id = posts.id)").
-		Table("post_visibilities")
+	err := r.RedisAdapter.GetOrSet(cacheKeys, &posts, func() (interface{}, error) {
+		subQueryFriend := r.DB.
+			Select("*").
+			Where("(sender_id = ? AND receiver_id = posts.user_id) or (sender_id = posts.user_id AND receiver_id = ?)", userID, userID).
+			Table("friends")
 
-	subQueryGroup := r.DB.
-		Select("group_id").
-		Where("user_id = ? AND approved = ?", userID, true).
-		Table("members")
+		subQueryPrivate := r.DB.
+			Select("user_id").
+			Where("(post_id = posts.id)").
+			Table("post_visibilities")
 
-	if err := r.DB.
-		Order("created_at desc").
-		Preload("User").
-		Preload("User").
-		Preload("Likes").
-		Preload("Comments").
-		Preload("Visibility.User").
-		Preload("PostTags.User").
-		Offset(pagination.Start).
-		Limit(pagination.Limit).
-		Find(&posts, "(privacy = ? OR (privacy = ? AND EXISTS(?)) OR (privacy = ? AND ? IN (?)) OR group_id IN (?))", "public", "friend", subQueryFriend, "specific", userID, subQueryPrivate, subQueryGroup).Error; err != nil {
+		subQueryGroup := r.DB.
+			Select("group_id").
+			Where("user_id = ? AND approved = ?", userID, true).
+			Table("members")
+
+		if err := r.DB.
+			Order("created_at desc").
+			Preload("User").
+			Preload("User").
+			Preload("Likes").
+			Preload("Comments").
+			Preload("Visibility.User").
+			Preload("PostTags.User").
+			Offset(pagination.Start).
+			Limit(pagination.Limit).
+			Find(&posts, "(privacy = ? OR (privacy = ? AND EXISTS(?)) OR (privacy = ? AND ? IN (?)) OR group_id IN (?))", "public", "friend", subQueryFriend, "specific", userID, subQueryPrivate, subQueryGroup).Error; err != nil {
+			return nil, err
+		}
+
+		return posts, nil
+	}, []string{"posts", userID, strconv.Itoa(pagination.Start), strconv.Itoa(pagination.Limit)}, time.Minute*5)
+
+	if err != nil {
 		return nil, err
 	}
 
-	//
 	return posts, nil
 }
 
