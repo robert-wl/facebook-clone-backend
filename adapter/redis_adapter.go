@@ -195,7 +195,7 @@ func (r *RedisAdapter) GetOrSet(keys []string, dest interface{}, callback func()
 	return nil
 }
 
-func (r *RedisAdapter) Del(obj interface{}, deleteVal []string) error {
+func (r *RedisAdapter) DelType(obj interface{}, deleteVal []string) error {
 	if obj == nil {
 		return nil
 	}
@@ -205,6 +205,65 @@ func (r *RedisAdapter) Del(obj interface{}, deleteVal []string) error {
 
 		for _, val := range deleteVal {
 			key := fmt.Sprintf("%s:*%s*", dataType, val)
+
+			keys, err := r.scanKeys(key, 0)
+
+			if err != nil {
+				continue
+			}
+
+			if len(keys) == 0 {
+				continue
+			}
+
+			for _, key := range keys {
+				if err := r.client.Del(ctx, key).Err(); err != nil {
+					continue
+				}
+			}
+		}
+
+	}()
+
+	return nil
+}
+
+func (r *RedisAdapter) DelAllType(obj interface{}) error {
+	if obj == nil {
+		return nil
+	}
+
+	go func() {
+		dataType := r.getGeneralizedType(obj)
+
+		key := fmt.Sprintf("%s:*", dataType)
+
+		keys, err := r.scanKeys(key, 0)
+
+		if err != nil {
+			return
+		}
+
+		if len(keys) == 0 {
+			return
+		}
+
+		for _, key := range keys {
+			if err := r.client.Del(ctx, key).Err(); err != nil {
+				continue
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (r *RedisAdapter) Del(keys []string) error {
+
+	go func() {
+
+		for _, val := range keys {
+			key := fmt.Sprintf("*%s*", val)
 
 			keys, err := r.scanKeys(key, 0)
 
