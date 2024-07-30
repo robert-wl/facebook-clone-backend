@@ -27,16 +27,24 @@ func generateUser() []model.User {
 
 		profile := fmt.Sprintf("https://i.pravatar.cc/300?img=%d", rand.Intn(70)+1)
 
+		var gender string
+
+		if rand.Intn(10) > 5 {
+			gender = "Male"
+		} else {
+			gender = "Female"
+		}
+
 		dob := time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000)))
 		user := model.User{
 			ID:                uuid.NewString(),
 			FirstName:         fn,
 			LastName:          ln,
-			Username:          fmt.Sprintf("%s.%s", fn, ln),
+			Username:          fmt.Sprintf("%s%s", fn, ln),
 			Email:             fmt.Sprintf("%s.%s@gmail.com", fn, ln),
 			Password:          pw,
 			Dob:               dob,
-			Gender:            "",
+			Gender:            gender,
 			Active:            true,
 			MiscId:            nil,
 			Profile:           &profile,
