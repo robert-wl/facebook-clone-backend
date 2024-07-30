@@ -441,7 +441,7 @@ func (r *userResolver) Blocked(ctx context.Context, obj *model.User) (bool, erro
 	userID := ctx.Value("UserID").(string)
 
 	var blocked bool
-	err := r.RedisAdapter.GetOrSet([]string{"blocked", userID, obj.ID}, blocked, func() (interface{}, error) {
+	err := r.RedisAdapter.GetOrSet([]string{"blocked", userID, obj.ID}, &blocked, func() (interface{}, error) {
 		var blocked *model.BlockNotification
 
 		if err := r.DB.First(&blocked, "sender_id = ? AND receiver_id = ?", userID, obj.ID).Error; err == nil && blocked != nil {
