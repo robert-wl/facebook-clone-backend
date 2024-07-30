@@ -172,6 +172,18 @@ func (r *mutationResolver) CreateComment(ctx context.Context, newComment model.N
 		r.createCommentNotification(ctx, *user, newComment)
 	}()
 
+	if newComment.ParentComment != nil {
+		if err := r.RedisAdapter.Del([]string{"comment", *newComment.ParentComment, "reply"}); err != nil {
+			return nil, err
+		}
+	}
+
+	if newComment.ParentPost != nil {
+		if err := r.RedisAdapter.Del([]string{"posts", *newComment.ParentPost, "comment"}); err != nil {
+			return nil, err
+		}
+	}
+
 	return comment, nil
 }
 
@@ -253,8 +265,12 @@ func (r *mutationResolver) LikePost(ctx context.Context, postID string) (*model.
 		}
 	}
 
-	r.RedisAdapter.Del([]string{"liked", postID, userID})
-	r.RedisAdapter.Del([]string{"post", postID, "like"})
+	if err := r.RedisAdapter.Del([]string{"liked", postID, userID}); err != nil {
+		return nil, err
+	}
+	if err := r.RedisAdapter.Del([]string{"post", postID, "like"}); err != nil {
+		return nil, err
+	}
 
 	return postLike, nil
 }
@@ -424,7 +440,7 @@ func (r *queryResolver) GetPosts(ctx context.Context, pagination model.Paginatio
 		}
 
 		return posts, nil
-	}, time.Minute*5)
+	}, time.Minute*2)
 
 	if err != nil {
 		return nil, err

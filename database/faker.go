@@ -134,8 +134,8 @@ func generateUser() []model.User {
 	return users
 }
 
-func generatePost(user model.User) {
-
+func generatePost(user model.User) []model.Post {
+	var posts []model.Post
 	db := GetDBInstance()
 
 	num := rand.Intn(20) + 1
@@ -159,50 +159,189 @@ func generatePost(user model.User) {
 		}
 
 		post := model.Post{
-			ID:           uuid.NewString(),
-			UserID:       user.ID,
-			Content:      faker.Sentence(),
-			Privacy:      "public",
-			LikeCount:    0,
-			CommentCount: 0,
-			ShareCount:   0,
-			CreatedAt:    time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
-			Files:        files,
+			ID:         uuid.NewString(),
+			UserID:     user.ID,
+			Content:    faker.Sentence(),
+			Privacy:    "public",
+			ShareCount: rand.Intn(100),
+			CreatedAt:  time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
+			Files:      files,
 		}
 
 		db.Create(&post)
+
+		posts = append(posts, post)
+	}
+
+	return posts
+}
+
+func generateFriend(users []model.User) {
+	db := GetDBInstance()
+
+	for i := 0; i < len(users); i++ {
+		for j := i + 1; j < len(users); j++ {
+			fmt.Println("Generating Friend")
+			sender := users[i]
+			receiver := users[j]
+
+			friend := model.Friend{
+				SenderID:   sender.ID,
+				ReceiverID: receiver.ID,
+				Accepted:   true,
+			}
+			friend2 := model.Friend{
+				SenderID:   receiver.ID,
+				ReceiverID: sender.ID,
+				Accepted:   true,
+			}
+
+			db.Create(&friend)
+			db.Create(&friend2)
+		}
 	}
 }
 
-func generateFriend(sender model.User, receiver model.User) {
+func generatePostLike(users []model.User, posts []model.Post) {
 	db := GetDBInstance()
 
-	fmt.Println("Generating Friend")
-	friend := model.Friend{
-		SenderID:   sender.ID,
-		ReceiverID: receiver.ID,
-		Accepted:   true,
+	for _, user := range users {
+		for _, post := range posts {
+			if rand.Intn(10) > 4 {
+				fmt.Println("Generating Post Like")
+				postLike := model.PostLike{
+					UserID: user.ID,
+					PostID: post.ID,
+				}
+
+				db.Create(&postLike)
+			}
+		}
 	}
-	friend2 := model.Friend{
-		SenderID:   receiver.ID,
-		ReceiverID: sender.ID,
-		Accepted:   true,
+}
+
+func generatePostComment(users []model.User, posts []model.Post) []model.Comment {
+	db := GetDBInstance()
+
+	var comments []model.Comment
+	for _, user := range users {
+		for _, post := range posts {
+			if rand.Intn(10) > 8 {
+				fmt.Println("Generating Post Comment")
+				postComment := model.Comment{
+					ID:           uuid.NewString(),
+					UserID:       user.ID,
+					Content:      faker.Sentence(),
+					ParentPostID: &post.ID,
+					CreatedAt:    time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
+				}
+
+				db.Create(&postComment)
+				comments = append(comments, postComment)
+			}
+		}
 	}
 
-	db.Create(&friend)
-	db.Create(&friend2)
+	for _, comment := range comments {
+		for _, user := range users {
+			if rand.Intn(10) > 8 {
+				fmt.Println("Generating Comment Reply")
+				commentReply := model.Comment{
+					ID:              uuid.NewString(),
+					UserID:          user.ID,
+					Content:         faker.Sentence(),
+					ParentCommentID: &comment.ID,
+					CreatedAt:       time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
+				}
+
+				db.Create(&commentReply)
+				comments = append(comments, commentReply)
+			}
+		}
+	}
+
+	return comments
+}
+
+func generateCommentLike(users []model.User, comments []model.Comment) {
+	db := GetDBInstance()
+
+	for _, user := range users {
+		for _, comment := range comments {
+			if rand.Intn(10) > 7 {
+				fmt.Println("Generating Comment Like")
+				commentLike := model.CommentLike{
+					UserID:    user.ID,
+					CommentID: comment.ID,
+				}
+
+				db.Create(&commentLike)
+			}
+		}
+	}
+
+}
+
+func generateConversation(users []model.User) {
+	db := GetDBInstance()
+
+	randUser := users
+	for i := 0; i < len(users); i++ {
+		rand.Shuffle(len(randUser), func(i, j int) {
+			randUser[i], randUser[j] = randUser[j], randUser[i]
+		})
+
+		randLength := rand.Intn(len(users))
+
+		for j := 0; j < randLength; j++ {
+			if randUser[j].ID == randUser[i].ID {
+				continue
+			}
+
+			sender := randUser[i]
+			receiver := randUser[j]
+
+			fmt.Println("Generating Conversation")
+			conversation := model.Conversation{
+				ID: uuid.NewString(),
+			}
+
+			db.Create(&conversation)
+
+			cUser1 := model.ConversationUsers{
+				ConversationID: conversation.ID,
+				UserID:         sender.ID,
+			}
+
+			cUser2 := model.ConversationUsers{
+				ConversationID: conversation.ID,
+				UserID:         receiver.ID,
+			}
+
+			db.Create(&cUser1)
+			db.Create(&cUser2)
+		}
+	}
+
 }
 
 func FakeData() {
 	users := generateUser()
 
+	var posts []model.Post
 	for _, user := range users {
-		generatePost(user)
+		userPosts := generatePost(user)
+
+		posts = append(posts, userPosts...)
 	}
 
-	for i := 0; i < len(users); i++ {
-		for j := i + 1; j < len(users); j++ {
-			generateFriend(users[i], users[j])
-		}
-	}
+	generatePostLike(users, posts)
+
+	comments := generatePostComment(users, posts)
+
+	generateCommentLike(users, comments)
+
+	generateFriend(users)
+
+	generateConversation(users)
 }
