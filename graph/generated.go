@@ -82,6 +82,7 @@ type ComplexityRoot struct {
 	}
 
 	Conversation struct {
+		Group    func(childComplexity int) int
 		ID       func(childComplexity int) int
 		Messages func(childComplexity int) int
 		Users    func(childComplexity int) int
@@ -577,6 +578,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CommentLike.User(childComplexity), true
+
+	case "Conversation.group":
+		if e.complexity.Conversation.Group == nil {
+			break
+		}
+
+		return e.complexity.Conversation.Group(childComplexity), true
 
 	case "Conversation.id":
 		if e.complexity.Conversation.ID == nil {
@@ -4474,6 +4482,75 @@ func (ec *executionContext) fieldContext_Conversation_users(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Conversation_group(ctx context.Context, field graphql.CollectedField, obj *model.Conversation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Conversation_group(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Group, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Group)
+	fc.Result = res
+	return ec.marshalOGroup2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐGroup(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Conversation_group(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Conversation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Group_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Group_name(ctx, field)
+			case "about":
+				return ec.fieldContext_Group_about(ctx, field)
+			case "privacy":
+				return ec.fieldContext_Group_privacy(ctx, field)
+			case "background":
+				return ec.fieldContext_Group_background(ctx, field)
+			case "members":
+				return ec.fieldContext_Group_members(ctx, field)
+			case "memberCount":
+				return ec.fieldContext_Group_memberCount(ctx, field)
+			case "joined":
+				return ec.fieldContext_Group_joined(ctx, field)
+			case "isAdmin":
+				return ec.fieldContext_Group_isAdmin(ctx, field)
+			case "chat":
+				return ec.fieldContext_Group_chat(ctx, field)
+			case "posts":
+				return ec.fieldContext_Group_posts(ctx, field)
+			case "files":
+				return ec.fieldContext_Group_files(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Group_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Group", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Conversation_messages(ctx context.Context, field graphql.CollectedField, obj *model.Conversation) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Conversation_messages(ctx, field)
 	if err != nil {
@@ -5313,6 +5390,8 @@ func (ec *executionContext) fieldContext_Group_chat(_ context.Context, field gra
 				return ec.fieldContext_Conversation_id(ctx, field)
 			case "users":
 				return ec.fieldContext_Conversation_users(ctx, field)
+			case "group":
+				return ec.fieldContext_Conversation_group(ctx, field)
 			case "messages":
 				return ec.fieldContext_Conversation_messages(ctx, field)
 			}
@@ -8561,6 +8640,8 @@ func (ec *executionContext) fieldContext_Mutation_createConversation(ctx context
 				return ec.fieldContext_Conversation_id(ctx, field)
 			case "users":
 				return ec.fieldContext_Conversation_users(ctx, field)
+			case "group":
+				return ec.fieldContext_Conversation_group(ctx, field)
 			case "messages":
 				return ec.fieldContext_Conversation_messages(ctx, field)
 			}
@@ -13352,6 +13433,8 @@ func (ec *executionContext) fieldContext_Query_getConversations(_ context.Contex
 				return ec.fieldContext_Conversation_id(ctx, field)
 			case "users":
 				return ec.fieldContext_Conversation_users(ctx, field)
+			case "group":
+				return ec.fieldContext_Conversation_group(ctx, field)
 			case "messages":
 				return ec.fieldContext_Conversation_messages(ctx, field)
 			}
@@ -19875,6 +19958,8 @@ func (ec *executionContext) _Conversation(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "group":
+			out.Values[i] = ec._Conversation_group(ctx, field, obj)
 		case "messages":
 			out.Values[i] = ec._Conversation_messages(ctx, field, obj)
 		default:

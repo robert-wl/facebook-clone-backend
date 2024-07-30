@@ -3,6 +3,7 @@
 type Conversation {
     id: ID!
     users: [ConversationUsers!]!
+    group: Group
     messages: [Message]
 }
 

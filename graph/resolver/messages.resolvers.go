@@ -134,20 +134,55 @@ func (r *queryResolver) GetConversations(ctx context.Context) ([]*model.Conversa
 
 	userID := ctx.Value("UserID").(string)
 
-	if err := r.DB.Model(&model.Member{}).Where("user_id = ? AND approved = ?", userID, true).Select("group_id").Find(&groupIDs).Error; err != nil {
-		return nil, err
-	}
+	cacheKey := []string{"conversations", userID}
 
-	if err := r.DB.Model(&model.ConversationUsers{}).Where("user_id = ?", userID).Select("conversation_id").Find(&conversationUsers).Error; err != nil {
-		return nil, err
-	}
+	err := r.RedisAdapter.GetOrSet(cacheKey, &conversations, func() (interface{}, error) {
+		if err := r.DB.Model(&model.Member{}).Where("user_id = ? AND approved = ?", userID, true).Select("group_id").Find(&groupIDs).Error; err != nil {
+			return nil, err
+		}
 
-	if err := r.DB.
-		Preload("Group").
-		Preload("Users").
-		Preload("Users.User").
-		Preload("Messages").
-		Find(&conversations, "id in (?) OR group_id IN (?)", conversationUsers, groupIDs).Error; err != nil {
+		if err := r.DB.Model(&model.ConversationUsers{}).Where("user_id = ?", userID).Select("conversation_id").Find(&conversationUsers).Error; err != nil {
+			return nil, err
+		}
+
+		if err := r.DB.
+			Preload("Users").
+			Preload("Users.User").
+			Preload("Messages").
+			Find(&conversations, "id in (?) OR group_id IN (?)", conversationUsers, groupIDs).Error; err != nil {
+			return nil, err
+		}
+
+		if len(conversations) == 0 {
+			return conversations, nil
+		}
+
+		var groupIds []string
+		for _, conversation := range conversations {
+			if conversation.GroupID == nil {
+				continue
+			}
+			groupIds = append(groupIds, *conversation.GroupID)
+		}
+
+		var groups []*model.Group
+
+		if err := r.DB.Find(&groups, "id IN (?)", groupIDs).Error; err != nil {
+			return nil, err
+		}
+
+		for _, group := range groups {
+			for _, conversation := range conversations {
+				if conversation.GroupID == &group.ID {
+					conversation.Group = group
+				}
+			}
+		}
+
+		return conversations, nil
+	}, 10*time.Minute)
+
+	if err != nil {
 		return nil, err
 	}
 
