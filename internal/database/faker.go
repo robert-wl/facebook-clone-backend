@@ -2,9 +2,10 @@ package database
 
 import (
 	"fmt"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils"
 	"math/rand"
 	"time"
+
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils"
 
 	"github.com/go-faker/faker/v4"
 	"github.com/google/uuid"
@@ -324,6 +325,52 @@ func generateConversation(users []model.User) {
 	}
 }
 
+func generateStories(users []model.User) {
+	db := GetDBInstance()
+
+	colors := []string{
+		"lightblue",
+		"pink",
+		"lightgray",
+		"orange",
+	}
+
+	fonts := []string{
+		"normal",
+		"roman",
+	}
+
+	for _, user := range users {
+		for i := 0; i < rand.Intn(10); i++ {
+			fmt.Println("Generating Story")
+			textBr := faker.Sentence()
+
+			if rand.Intn(10) > 5 {
+				story := model.Story{
+					ID:        uuid.NewString(),
+					UserID:    user.ID,
+					Font:      &fonts[rand.Intn(len(fonts))],
+					Color:     &colors[rand.Intn(len(colors))],
+					Text:      &textBr,
+					CreatedAt: time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(20))),
+				}
+
+				db.Create(&story)
+			} else {
+				image := generateImage(nil)
+				story := model.Story{
+					ID:        uuid.NewString(),
+					UserID:    user.ID,
+					Image:     &image,
+					CreatedAt: time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(20))),
+				}
+
+				db.Create(&story)
+			}
+		}
+	}
+}
+
 func FakeData() {
 	users := generateUser()
 
@@ -343,4 +390,6 @@ func FakeData() {
 	generateFriend(users)
 
 	generateConversation(users)
+
+	generateStories(users)
 }
