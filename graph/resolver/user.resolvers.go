@@ -6,458 +6,120 @@ package resolver
 
 import (
 	"context"
-	"fmt"
-	helper2 "github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils/mail"
-	"time"
-
-	"github.com/google/uuid"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 )
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	activationId := uuid.NewString()
-
-	user := &model.User{
-		ID:         uuid.NewString(),
-		FirstName:  input.FirstName,
-		LastName:   input.LastName,
-		Username:   input.Username,
-		Email:      input.Email,
-		Dob:        input.Dob,
-		Gender:     input.Gender,
-		Active:     true,
-		MiscId:     &activationId,
-		Profile:    nil,
-		Background: nil,
-		Theme:      "light",
-	}
-
-	if hashed, err := helper2.EncryptPassword(input.Password); err != nil {
-		return nil, err
-	} else {
-		user.Password = hashed
-	}
-
-	//html := fmt.Sprintf(
-	//	`
-	//	<h1>Activate</h1>
-	//	<a href="http://localhost:5173/activate/%s">Click here to activate your account</a>
-	//	`, activationId)
-
-	//_, err := mail.SendVerification(user.Email, "Activate Account", html)
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	if err := r.DB.Save(&user).Error; err != nil {
-		return nil, err
-	}
-
-	r.Redis.Del(ctx, fmt.Sprintf("users"))
-
-	return user, nil
+	return r.UserService.CreateUser(input)
 }
 
 // ActivateUser is the resolver for the activateUser field.
 func (r *mutationResolver) ActivateUser(ctx context.Context, id string) (*model.User, error) {
-	var user *model.User
-
-	if err := r.DB.First(&user, "not active and misc_id = ?", id).Update("active", true).Update("misc_id", nil).Error; err != nil {
-		return nil, err
-	}
-
-	return user, nil
+	return r.UserService.ActivateUser(id)
 }
 
 // AuthenticateUser is the resolver for the authenticateUser field.
 func (r *mutationResolver) AuthenticateUser(ctx context.Context, email string, password string) (string, error) {
-	var user *model.User
-
-	err := r.RedisAdapter.GetOrSet([]string{email}, &user, func() (interface{}, error) {
-		if err := r.DB.First(&user, "email = ?", email).Error; err != nil {
-			return nil, fmt.Errorf("credentials not found")
-		}
-
-		return user, nil
-	}, time.Minute*60)
-
-	fmt.Println("USER", user, err)
-	if err != nil {
-		return "", err
-	}
-
-	if user.Active == false {
-		return "", fmt.Errorf("user is not active")
-	}
-
-	if !helper2.ComparePassword(user.Password, password) {
-		return "", fmt.Errorf("incorrect password")
-	}
-
-	return helper2.CreateJWT(user.ID)
+	return r.UserService.AuthenticateUser(email, password)
 }
 
 // ForgotPassword is the resolver for the forgotPassword field.
 func (r *mutationResolver) ForgotPassword(ctx context.Context, email string) (bool, error) {
-	forgotId := uuid.NewString()
-
-	html := fmt.Sprintf(
-		`
-		<h1>Reset Password</h1>
-		<a href="http://localhost:5173/forgot/%s">Click here to reset your password</a>
-		`, forgotId)
-
-	_, err := mail.SendVerification(email, "Reset Password", html)
-	if err != nil {
-		return false, err
-	}
-
-	if err := r.DB.First(&model.User{}, "email = ?", email).Update("misc_id", forgotId).Error; err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return r.UserService.ForgotPassword(email)
 }
 
 // ResetPassword is the resolver for the resetPassword field.
 func (r *mutationResolver) ResetPassword(ctx context.Context, id string, password string) (*model.User, error) {
-	var user *model.User
-
-	if err := r.DB.First(&user, "misc_id = ?", id).Error; err != nil {
-		return nil, err
-	}
-
-	if helper2.ComparePassword(user.Password, password) {
-		return nil, fmt.Errorf("password cannot be the same")
-	}
-
-	if hashedP, err := helper2.EncryptPassword(password); err != nil {
-		return nil, err
-	} else {
-		user.Password = hashedP
-	}
-
-	user.MiscId = nil
-
-	if err := r.DB.Save(&user).Error; err != nil {
-		return nil, err
-	}
-
-	return user, nil
+	return r.UserService.ResetPassword(id, password)
 }
 
 // UpdateUserProfile is the resolver for the updateUserProfile field.
 func (r *mutationResolver) UpdateUserProfile(ctx context.Context, profile string) (*model.User, error) {
-	var user *model.User
-	userID := ctx.Value("UserID")
-
-	if err := r.DB.First(&user, "id = ?", userID).Update("profile", profile).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.RedisAdapter.DelType(user, []string{user.ID, user.Username, user.Email}); err != nil {
-		return nil, err
-	}
-
-	return user, nil
+	userID := ctx.Value("UserID").(string)
+	return r.UserService.UpdateUserProfile(userID, profile)
 }
 
 // UpdateUserBackground is the resolver for the updateUserBackground field.
 func (r *mutationResolver) UpdateUserBackground(ctx context.Context, background string) (*model.User, error) {
-	var user *model.User
-	userID := ctx.Value("UserID")
-
-	if err := r.DB.First(&user, "id = ?", userID).Update("background", background).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.RedisAdapter.DelType(user, []string{user.ID, user.Username, user.Email}); err != nil {
-		return nil, err
-	}
-
-	return user, nil
+	userID := ctx.Value("UserID").(string)
+	return r.UserService.UpdateUserBackground(userID, background)
 }
 
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error) {
-	var user *model.User
 	userID := ctx.Value("UserID").(string)
-
-	if err := r.DB.First(&user, "id = ?", userID).Error; err != nil {
-		return nil, err
-	}
-
-	user.FirstName = input.FirstName
-	user.LastName = input.LastName
-	if input.Password != "" {
-		user.Password = input.Password
-	}
-	user.Gender = input.Gender
-
-	if err := r.DB.Save(&user).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.RedisAdapter.DelType(user, []string{user.ID, user.Username, user.Email}); err != nil {
-		return nil, err
-	}
-
-	return user, nil
+	return r.UserService.UpdateUser(userID, input)
 }
 
 // UpdateTheme is the resolver for the updateTheme field.
 func (r *mutationResolver) UpdateTheme(ctx context.Context, theme string) (*model.User, error) {
-	var user *model.User
 	userID := ctx.Value("UserID").(string)
-
-	if err := r.DB.First(&user, "id = ?", userID).Update("theme", theme).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.RedisAdapter.DelType(user, []string{user.ID, user.Username, user.Email}); err != nil {
-		return nil, err
-	}
-
-	return user, nil
+	return r.UserService.UpdateTheme(userID, theme)
 }
 
 // GetUser is the resolver for the getUser field.
 func (r *queryResolver) GetUser(ctx context.Context, username string) (*model.User, error) {
-	var user *model.User
-
-	var posts []*model.Post
-
 	userID := ctx.Value("UserID").(string)
-
-	err := r.RedisAdapter.GetOrSet([]string{username}, &user, func() (interface{}, error) {
-		if err := r.DB.First(&user, "username = ?", username).Error; err != nil {
-			return nil, err
-		}
-		return user, nil
-	}, time.Minute*60)
-
-	if err != nil {
-		return nil, err
-	}
-
-	subQueryFriend := r.DB.
-		Select("*").
-		Where("(sender_id = ? AND receiver_id = posts.user_id) or (sender_id = posts.user_id AND receiver_id = ?)", userID, userID).
-		Table("friends")
-
-	subQueryPrivate := r.DB.
-		Select("user_id").
-		Where("(post_id = posts.id)").
-		Table("post_visibilities")
-
-	if err := r.DB.
-		Order("created_at desc").
-		Preload("User").
-		Preload("User").
-		Preload("Likes").
-		Preload("Comments").
-		Preload("Visibility.User").
-		Preload("PostTags.User").
-		Find(&posts, "user_id = ? AND (privacy = ? OR (privacy = ? AND EXISTS(?)) OR (privacy = ? AND ? IN (?)) OR ?) AND group_id IS NULL", user.ID, "public", "friend", subQueryFriend, "specific", userID, subQueryPrivate, user.ID == userID).Error; err != nil {
-		return nil, err
-	}
-
-	user.Posts = posts
-
-	return user, nil
+	return r.UserService.GetUser(userID, username)
 }
 
 // GetUsers is the resolver for the getUsers field.
 func (r *queryResolver) GetUsers(ctx context.Context) ([]*model.User, error) {
-	var users []*model.User
-
-	if err := r.DB.Find(&users).Error; err != nil {
-		return nil, err
-	}
-
-	return users, nil
+	return r.UserService.GetUsers()
 }
 
 // CheckActivateLink is the resolver for the checkActivateLink field.
 func (r *queryResolver) CheckActivateLink(ctx context.Context, id string) (bool, error) {
-	if err := r.DB.First(&model.User{}, "not active and misc_id = ?", id).Error; err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return r.UserService.CheckActivateLink(id)
 }
 
 // CheckResetLink is the resolver for the checkResetLink field.
 func (r *queryResolver) CheckResetLink(ctx context.Context, id string) (bool, error) {
-	if err := r.DB.First(&model.User{}, "active and misc_id = ?", id).Error; err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return r.UserService.CheckResetLink(id)
 }
 
 // GetAuth is the resolver for the getAuth field.
 func (r *queryResolver) GetAuth(ctx context.Context) (*model.User, error) {
-	var user *model.User
-
 	userID := ctx.Value("UserID").(string)
-
-	err := r.RedisAdapter.GetOrSet([]string{userID}, &user, func() (interface{}, error) {
-		if err := r.DB.First(&user, "id = ?", userID).Error; err != nil {
-			return nil, err
-		}
-		return user, nil
-	}, time.Minute*60)
-
-	if err != nil {
-		fmt.Println("ERRRO", err.Error())
-		return nil, err
-	}
-
-	fmt.Println("USER", user)
-
-	return user, nil
+	return r.UserService.GetAuth(userID)
 }
 
 // GetFilteredUsers is the resolver for the getFilteredUsers field.
 func (r *queryResolver) GetFilteredUsers(ctx context.Context, filter string, pagination model.Pagination) ([]*model.User, error) {
-	var users []*model.User
-
 	userID := ctx.Value("UserID").(string)
-
-	if err := r.DB.
-		Offset(pagination.Start).
-		Limit(pagination.Limit).
-		Where("id != ? AND (LOWER(first_name) LIKE LOWER(?) OR LOWER(last_name) LIKE LOWER(?) OR LOWER(username) LIKE LOWER(?))", userID, "%"+filter+"%", "%"+filter+"%", "%"+filter+"%").
-		Find(&users).Error; err != nil {
-		return nil, err
-	}
-
-	return users, nil
+	return r.UserService.GetFilteredUsers(userID, filter, pagination)
 }
 
 // FriendCount is the resolver for the friendCount field.
 func (r *userResolver) FriendCount(ctx context.Context, obj *model.User) (int, error) {
-	var friendCount int64
 	userID := ctx.Value("UserID").(string)
-
-	err := r.RedisAdapter.GetOrSet([]string{"friend-count", userID}, &friendCount, func() (interface{}, error) {
-		if err := r.DB.Find(&model.Friend{}, "(sender_id = ? or receiver_id = ?) and accepted = true", userID, userID).Count(&friendCount).Error; err != nil {
-			return nil, err
-		}
-
-		return int(friendCount), nil
-	}, time.Minute*60)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return int(friendCount), nil
+	return r.UserService.FriendCount(userID)
 }
 
 // MutualCount is the resolver for the mutualCount field.
 func (r *userResolver) MutualCount(ctx context.Context, obj *model.User) (int, error) {
-	var friendIDs []string
-	var myFriendIDs []string
-	var mutualCount int64
-
 	userID := ctx.Value("UserID").(string)
-
-	err := r.RedisAdapter.GetOrSet([]string{"mutual-count", userID}, &mutualCount, func() (interface{}, error) {
-		if err := r.DB.
-			Model(&model.Friend{}).
-			Where("sender_id = ? OR receiver_id = ?", obj.ID, obj.ID).
-			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", obj.ID).
-			Find(&friendIDs).Error; err != nil {
-			return nil, err
-		}
-
-		if err := r.DB.Model(&model.Friend{}).
-			Where("sender_id = ? OR receiver_id = ? AND accepted = ?", userID, userID, true).
-			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", userID).Find(&myFriendIDs).Error; err != nil {
-			return nil, err
-		}
-		if err := r.DB.Find(&model.User{}, "id IN (?) AND id IN (?)", friendIDs, myFriendIDs).Count(&mutualCount).Error; err != nil {
-			return nil, err
-		}
-
-		return int(mutualCount), nil
-	}, time.Minute*60)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return int(mutualCount), nil
+	return r.UserService.MutualCount(userID, obj)
 }
 
 // NotificationCount is the resolver for the notificationCount field.
 func (r *userResolver) NotificationCount(ctx context.Context, obj *model.User) (int, error) {
-	var notificationCount int64
-
 	userID := ctx.Value("UserID").(string)
-
-	err := r.RedisAdapter.GetOrSet([]string{"notification-count", userID}, &notificationCount, func() (interface{}, error) {
-		if err := r.DB.Find(&model.Notification{}, "user_id = ? AND seen = false", userID).Count(&notificationCount).Error; err != nil {
-			return nil, err
-		}
-
-		return int(notificationCount), nil
-	}, time.Minute*60)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return int(notificationCount), nil
+	return r.UserService.NotificationCount(userID)
 }
 
 // Friended is the resolver for the friended field.
 func (r *userResolver) Friended(ctx context.Context, obj *model.User) (string, error) {
-	var friend *model.Friend
-	var status string
 	userID := ctx.Value("UserID").(string)
-
-	//TODO REDIS
-
-	if err := r.DB.First(&friend, "(sender_id = ? and receiver_id = ?) or (sender_id = ? and receiver_id = ?)", userID, obj.ID, obj.ID, userID).Error; err != nil {
-		status = "not friends"
-	} else {
-		if friend.Accepted {
-			status = "friends"
-		} else {
-			status = "pending"
-		}
-	}
-
-	return status, nil
+	return r.UserService.Friended(userID, obj)
 }
 
 // Blocked is the resolver for the blocked field.
 func (r *userResolver) Blocked(ctx context.Context, obj *model.User) (bool, error) {
 	userID := ctx.Value("UserID").(string)
-
-	var blocked bool
-	err := r.RedisAdapter.GetOrSet([]string{"blocked", userID, obj.ID}, &blocked, func() (interface{}, error) {
-		var blocked *model.BlockNotification
-
-		if err := r.DB.First(&blocked, "sender_id = ? AND receiver_id = ?", userID, obj.ID).Error; err == nil && blocked != nil {
-			return true, nil
-		}
-
-		return false, nil
-
-	}, time.Minute*60)
-
-	if err != nil {
-		return false, err
-	}
-
-	return blocked, nil
+	return r.UserService.Blocked(userID, obj)
 }
 
 // Mutation returns graph.MutationResolver implementation.

@@ -6,394 +6,85 @@ package resolver
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strconv"
-	"time"
-
-	"github.com/google/uuid"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 )
 
 // LikeCount is the resolver for the likeCount field.
 func (r *commentResolver) LikeCount(ctx context.Context, obj *model.Comment) (int, error) {
-	var likeCount int64
-
-	err := r.RedisAdapter.GetOrSet([]string{"comment", obj.ID, "like"}, &likeCount, func() (interface{}, error) {
-		likeCount = r.DB.Model(obj).Association("Likes").Count()
-
-		return likeCount, nil
-
-	}, time.Minute*5)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return int(likeCount), nil
+	return r.PostService.LikeCountComment(obj)
 }
 
 // ReplyCount is the resolver for the replyCount field.
 func (r *commentResolver) ReplyCount(ctx context.Context, obj *model.Comment) (int, error) {
-	var replyCount int64
-
-	err := r.RedisAdapter.GetOrSet([]string{"comment", obj.ID, "reply"}, &replyCount, func() (interface{}, error) {
-		replyCount = r.DB.Model(obj).Association("Comments").Count()
-
-		return replyCount, nil
-
-	}, time.Minute*5)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return int(replyCount), nil
+	return r.PostService.ReplyCount(obj)
 }
 
 // Liked is the resolver for the liked field.
 func (r *commentResolver) Liked(ctx context.Context, obj *model.Comment) (*bool, error) {
-	boolean := false
-
 	userID := ctx.Value("UserID").(string)
 
-	err := r.RedisAdapter.GetOrSet([]string{"liked", obj.ID, userID}, &boolean, func() (interface{}, error) {
-		var commentLike *model.CommentLike
-
-		if err := r.DB.First(&commentLike, "comment_id = ? AND user_id = ?", obj.ID, userID).Error; err == nil && commentLike != nil {
-			boolean = true
-		}
-
-		return &boolean, nil
-
-	}, time.Minute*5)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &boolean, nil
+	return r.PostService.LikedComment(userID, obj)
 }
 
 // CreatePost is the resolver for the createPost field.
 func (r *mutationResolver) CreatePost(ctx context.Context, newPost model.NewPost) (*model.Post, error) {
-	var user *model.User
 	userID := ctx.Value("UserID").(string)
 
-	if err := r.DB.First(&user, "id = ?", userID).Error; err != nil {
-		return nil, err
-	}
-
-	boolVar := false
-	post := &model.Post{
-		ID:           uuid.NewString(),
-		UserID:       userID,
-		User:         user,
-		Content:      newPost.Content,
-		Privacy:      newPost.Privacy,
-		LikeCount:    0,
-		CommentCount: 0,
-		ShareCount:   0,
-		GroupID:      newPost.GroupID,
-		Files:        newPost.Files,
-		Liked:        &boolVar,
-		CreatedAt:    time.Now(),
-	}
-
-	if err := r.DB.Save(&post).Error; err != nil {
-		return nil, err
-	}
-
-	for _, vsb := range newPost.Visibility {
-		visibility := &model.PostVisibility{
-			PostID: post.ID,
-			UserID: *vsb,
-		}
-
-		if err := r.DB.Save(visibility).Error; err != nil {
-			return nil, err
-		}
-	}
-
-	for i, _ := range newPost.Tags {
-		tagModel := &model.PostTag{
-			PostID: post.ID,
-			UserID: *newPost.Tags[i],
-		}
-
-		if err := r.DB.Create(tagModel).Error; err != nil {
-			return nil, err
-		}
-	}
-
-	if err := r.DB.
-		Preload("PostTags.User").
-		Preload("Visibility.User").
-		First(&post).Error; err != nil {
-		return nil, err
-	}
-
-	go func() {
-		r.createPostNotification(ctx, *user, post.ID)
-	}()
-
-	return post, nil
+	return r.PostService.CreatePost(userID, newPost)
 }
 
 // CreateComment is the resolver for the createComment field.
 func (r *mutationResolver) CreateComment(ctx context.Context, newComment model.NewComment) (*model.Comment, error) {
-	var user *model.User
 	userID := ctx.Value("UserID").(string)
 
-	if err := r.DB.First(&user, "id = ?", userID).Error; err != nil {
-		return nil, err
-	}
-
-	boolVar := false
-	comment := &model.Comment{
-		ID:              uuid.NewString(),
-		UserID:          userID,
-		User:            user,
-		Content:         newComment.Content,
-		Liked:           &boolVar,
-		LikeCount:       0,
-		ReplyCount:      0,
-		ParentPostID:    newComment.ParentPost,
-		ParentCommentID: newComment.ParentComment,
-		CreatedAt:       time.Now(),
-	}
-
-	if err := r.DB.Save(&comment).Error; err != nil {
-		return nil, err
-	}
-
-	go func() {
-		r.createCommentNotification(ctx, *user, newComment)
-	}()
-
-	if newComment.ParentComment != nil {
-		if err := r.RedisAdapter.Del([]string{"comment", *newComment.ParentComment, "reply"}); err != nil {
-			return nil, err
-		}
-	}
-
-	if newComment.ParentPost != nil {
-		if err := r.RedisAdapter.Del([]string{"posts", *newComment.ParentPost, "comment"}); err != nil {
-			return nil, err
-		}
-	}
-
-	return comment, nil
+	return r.PostService.CreateComment(userID, newComment)
 }
 
 // SharePost is the resolver for the sharePost field.
 func (r *mutationResolver) SharePost(ctx context.Context, userID string, postID string) (*string, error) {
-	var user *model.User
-
-	if err := r.DB.First(&user, "id = ?", userID).Error; err != nil {
-		return nil, err
-	}
-
-	conv, err := r.CreateConversation(ctx, user.Username)
-
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = r.SendMessage(ctx, conv.ID, nil, nil, &postID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var post *model.Post
-
-	if err := r.DB.First(&post, "id = ?", postID).Error; err != nil {
-		return nil, err
-	}
-
-	post.ShareCount = post.ShareCount + 1
-
-	if err := r.DB.Save(&post).Error; err != nil {
-		return nil, err
-	}
-
-	go func() {
-		if err := r.DB.First(&user, "id = ?", userID).Error; err != nil {
-			return
-		}
-
-		newNotification := &model.NewNotification{
-			Message: fmt.Sprintf("%s %s released a new story", user.FirstName, user.LastName),
-			UserID:  userID,
-			PostID:  &post.ID,
-			ReelID:  nil,
-			StoryID: nil,
-			GroupID: nil,
-		}
-
-		if _, err := r.CreateNotification(ctx, *newNotification); err != nil {
-			return
-		}
-	}()
-
-	return &conv.ID, nil
+	return r.PostService.SharePost(userID, postID)
 }
 
 // LikePost is the resolver for the likePost field.
 func (r *mutationResolver) LikePost(ctx context.Context, postID string) (*model.PostLike, error) {
-	var postLike *model.PostLike
 	userID := ctx.Value("UserID").(string)
 
-	if err := r.DB.First(&postLike, "post_id = ? AND user_id = ?", postID, userID).Error; err != nil || postLike == nil {
-		postLike = &model.PostLike{
-			PostID: postID,
-			UserID: userID,
-		}
-		if err := r.DB.Save(&postLike).Error; err != nil {
-			return nil, err
-		}
-
-		go func() {
-			r.createLikeNotification(ctx, userID, postID)
-		}()
-
-	} else {
-		if err := r.DB.Delete(&postLike).Error; err != nil {
-			return nil, err
-		}
-	}
-
-	if err := r.RedisAdapter.Del([]string{"liked", postID, userID}); err != nil {
-		return nil, err
-	}
-	if err := r.RedisAdapter.Del([]string{"post", postID, "like"}); err != nil {
-		return nil, err
-	}
-
-	return postLike, nil
+	return r.PostService.LikePost(userID, postID)
 }
 
 // Likecomment is the resolver for the likecomment field.
 func (r *mutationResolver) Likecomment(ctx context.Context, commentID string) (*model.CommentLike, error) {
-	var commentLike *model.CommentLike
 	userID := ctx.Value("UserID").(string)
 
-	if err := r.DB.First(&commentLike, "comment_id = ? AND user_id = ?", commentID, userID).Error; err != nil {
-		commentLike = &model.CommentLike{
-			CommentID: commentID,
-			UserID:    userID,
-		}
-		if err := r.DB.Save(&commentLike).Error; err != nil {
-			return nil, err
-		}
-	} else {
-		if err := r.DB.Delete(&commentLike).Error; err != nil {
-			return nil, err
-		}
-	}
-
-	r.RedisAdapter.Del([]string{"liked", commentID, userID})
-	r.RedisAdapter.Del([]string{"comment", commentID, "like"})
-	return commentLike, nil
+	return r.PostService.Likecomment(userID, commentID)
 }
 
 // DeletePost is the resolver for the deletePost field.
 func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*string, error) {
-	if err := r.DB.Delete(&model.Post{}, "id = ?", postID).Error; err != nil {
-		return nil, err
-	}
-
-	return &postID, nil
+	return r.PostService.DeletePost(postID)
 }
 
 // LikeCount is the resolver for the likeCount field.
 func (r *postResolver) LikeCount(ctx context.Context, obj *model.Post) (int, error) {
-	var count int64
-
-	err := r.RedisAdapter.GetOrSet([]string{"post", obj.ID, "like"}, &count, func() (interface{}, error) {
-		count = r.DB.Model(obj).Association("Likes").Count()
-
-		return count, nil
-
-	}, time.Minute*5)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return int(count), nil
+	return r.PostService.LikeCountPost(obj)
 }
 
 // CommentCount is the resolver for the commentCount field.
 func (r *postResolver) CommentCount(ctx context.Context, obj *model.Post) (int, error) {
-	var commentCount int64
-
-	err := r.RedisAdapter.GetOrSet([]string{"post", obj.ID, "comment"}, &commentCount, func() (interface{}, error) {
-		commentCount = r.DB.Model(obj).Association("Comments").Count()
-
-		return commentCount, nil
-
-	}, time.Minute*5)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return int(commentCount), nil
+	return r.PostService.CommentCount(obj)
 }
 
 // Group is the resolver for the group field.
 func (r *postResolver) Group(ctx context.Context, obj *model.Post) (*model.Group, error) {
-	if obj.GroupID == nil {
-		return nil, nil
-	}
-
-	var group *model.Group
-
-	if groupSerialized, err := r.Redis.Get(ctx, fmt.Sprintf("group:%s", *obj.GroupID)).Result(); err != nil {
-
-		if err := r.DB.
-			Find(&group, "id = ?", *obj.GroupID).Error; err != nil {
-			return nil, err
-		}
-
-		if groupSerialized, err := json.Marshal(group); err != nil {
-			return nil, err
-		} else {
-			r.Redis.Set(ctx, fmt.Sprintf("group:%s", *obj.GroupID), groupSerialized, 10*time.Second)
-		}
-	} else {
-		if err := json.Unmarshal([]byte(groupSerialized), &group); err != nil {
-			return nil, err
-		}
-	}
-
-	return group, nil
+	return r.PostService.Group(obj)
 }
 
 // Liked is the resolver for the liked field.
 func (r *postResolver) Liked(ctx context.Context, obj *model.Post) (*bool, error) {
-	boolean := false
-	var postLike *model.PostLike
-
 	userID := ctx.Value("UserID").(string)
-
-	cacheKey := []string{"post", obj.ID, userID}
-	err := r.RedisAdapter.GetOrSet(cacheKey, &boolean, func() (interface{}, error) {
-		if err := r.DB.First(&postLike, "post_id = ? AND user_id = ?", obj.ID, userID).Error; err == nil && postLike != nil {
-			boolean = true
-		}
-
-		return &boolean, nil
-	}, time.Minute*5)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &boolean, nil
+	return r.PostService.LikedPost(userID, obj)
 }
 
 // GetPost is the resolver for the getPost field.
@@ -403,191 +94,35 @@ func (r *queryResolver) GetPost(ctx context.Context, id string) (*model.Post, er
 
 // GetPosts is the resolver for the getPosts field.
 func (r *queryResolver) GetPosts(ctx context.Context, pagination model.Pagination) ([]*model.Post, error) {
-	var posts []*model.Post
-
 	userID := ctx.Value("UserID").(string)
 
-	cacheKeys := []string{"posts", userID, strconv.Itoa(pagination.Start), strconv.Itoa(pagination.Limit)}
-
-	err := r.RedisAdapter.GetOrSet(cacheKeys, &posts, func() (interface{}, error) {
-		subQueryFriend := r.DB.
-			Select("*").
-			Where("(sender_id = ? AND receiver_id = posts.user_id) or (sender_id = posts.user_id AND receiver_id = ?)", userID, userID).
-			Table("friends")
-
-		subQueryPrivate := r.DB.
-			Select("user_id").
-			Where("(post_id = posts.id)").
-			Table("post_visibilities")
-
-		subQueryGroup := r.DB.
-			Select("group_id").
-			Where("user_id = ? AND approved = ?", userID, true).
-			Table("members")
-
-		if err := r.DB.
-			Order("created_at desc").
-			Preload("User").
-			Preload("User").
-			Preload("Likes").
-			Preload("Comments").
-			Preload("Visibility.User").
-			Preload("PostTags.User").
-			Offset(pagination.Start).
-			Limit(pagination.Limit).
-			Find(&posts, "(privacy = ? OR (privacy = ? AND EXISTS(?)) OR (privacy = ? AND ? IN (?)) OR group_id IN (?))", "public", "friend", subQueryFriend, "specific", userID, subQueryPrivate, subQueryGroup).Error; err != nil {
-			return nil, err
-		}
-
-		return posts, nil
-	}, time.Minute*2)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return posts, nil
+	return r.PostService.GetPosts(userID, pagination)
 }
 
 // GetGroupPosts is the resolver for the getGroupPosts field.
 func (r *queryResolver) GetGroupPosts(ctx context.Context, groupID string, pagination model.Pagination) ([]*model.Post, error) {
-	var posts []*model.Post
+	userID := ctx.Value("UserID").(string)
 
-	cacheKey := []string{"group", "posts", groupID, strconv.Itoa(pagination.Start), strconv.Itoa(pagination.Limit)}
-
-	err := r.RedisAdapter.GetOrSet(cacheKey, &posts, func() (interface{}, error) {
-		if err := r.DB.
-			Order("created_at desc").
-			Preload("User").
-			Preload("Likes").
-			Preload("Comments").
-			Offset(pagination.Start).
-			Limit(pagination.Limit).
-			Find(&posts, "group_id = ?", groupID).Error; err != nil {
-			return nil, err
-		}
-
-		return posts, nil
-	}, time.Minute*5)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return posts, nil
+	return r.PostService.GetGroupPosts(userID, groupID, pagination)
 }
 
 // GetCommentPost is the resolver for the getCommentPost field.
 func (r *queryResolver) GetCommentPost(ctx context.Context, postID string) ([]*model.Comment, error) {
-	var comments []*model.Comment
-
-	cacheKey := []string{"post", postID, "comment"}
-
-	err := r.RedisAdapter.GetOrSet(cacheKey, &comments, func() (interface{}, error) {
-
-		if err := r.DB.
-			Preload("User").
-			Preload("Likes").
-			Preload("Comments").
-			Preload("Comments.User").
-			Find(&comments, "parent_post_id = ?", postID).Error; err != nil {
-			return nil, err
-		}
-
-		return comments, nil
-	}, time.Minute*5)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return comments, nil
+	return r.PostService.GetCommentPost(postID)
 }
 
 // GetFilteredPosts is the resolver for the getFilteredPosts field.
 func (r *queryResolver) GetFilteredPosts(ctx context.Context, filter string, pagination model.Pagination) ([]*model.Post, error) {
-	var posts []*model.Post
-
 	userID := ctx.Value("UserID").(string)
 
-	cacheKey := []string{"posts", filter, strconv.Itoa(pagination.Start), strconv.Itoa(pagination.Limit)}
-
-	err := r.RedisAdapter.GetOrSet(cacheKey, &posts, func() (interface{}, error) {
-		subQueryFriend := r.DB.
-			Select("*").
-			Where("(sender_id = ? AND receiver_id = posts.user_id) or (sender_id = posts.user_id AND receiver_id = ?)", userID, userID).
-			Table("friends")
-
-		subQueryPrivate := r.DB.
-			Select("user_id").
-			Where("(post_id = posts.id)").
-			Table("post_visibilities")
-
-		subQueryGroup := r.DB.
-			Select("group_id").
-			Where("user_id = ? AND approved = ?", userID, true).
-			Table("members")
-
-		if err := r.DB.
-			Order("created_at desc").
-			Preload("User").
-			Preload("User").
-			Preload("Likes").
-			Preload("Comments").
-			Preload("Visibility.User").
-			Preload("PostTags.User").
-			Offset(pagination.Start).
-			Limit(pagination.Limit).
-			Find(&posts, "id = ? OR ((privacy = ? OR (privacy = ? AND EXISTS(?)) OR (privacy = ? AND ? IN (?)) OR group_id IN (?)) AND LOWER(content) LIKE LOWER(?))", filter, "public", "friend", subQueryFriend, "specific", userID, subQueryPrivate, subQueryGroup, "%"+filter+"%").Error; err != nil {
-			return nil, err
-		}
-
-		return posts, nil
-	}, time.Minute*5)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return posts, nil
+	return r.PostService.GetFilteredPosts(userID, filter, pagination)
 }
 
 // GetGroupHomePosts is the resolver for the getGroupHomePosts field.
 func (r *queryResolver) GetGroupHomePosts(ctx context.Context, pagination model.Pagination) ([]*model.Post, error) {
-	var posts []*model.Post
-
 	userID := ctx.Value("UserID").(string)
 
-	cacheKey := []string{"post", "group", userID, strconv.Itoa(pagination.Start), strconv.Itoa(pagination.Limit)}
-
-	err := r.RedisAdapter.GetOrSet(cacheKey, &posts, func() (interface{}, error) {
-		subQueryGroup := r.DB.
-			Select("group_id").
-			Where("user_id = ? AND approved = ?", userID, true).
-			Table("members")
-
-		if err := r.DB.
-			Order("created_at desc").
-			Preload("User").
-			Preload("User").
-			Preload("Likes").
-			Preload("Comments").
-			Preload("Visibility.User").
-			Preload("PostTags.User").
-			Offset(pagination.Start).
-			Limit(pagination.Limit).
-			Find(&posts, "group_id IN (?)", subQueryGroup).Error; err != nil {
-			return nil, err
-		}
-
-		return posts, nil
-	}, time.Minute*5)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return posts, nil
+	return r.PostService.GetGroupHomePosts(userID, pagination)
 }
 
 // Comment returns graph.CommentResolver implementation.

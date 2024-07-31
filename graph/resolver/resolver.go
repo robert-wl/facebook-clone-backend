@@ -1,10 +1,7 @@
 package resolver
 
 import (
-	"github.com/redis/go-redis/v9"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/adapter"
-	"gorm.io/gorm"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/services"
 )
 
 // This file will not be regenerated automatically.
@@ -14,8 +11,12 @@ import (
 //go:generate go run github.com/99designs/gqlgen generate
 
 type Resolver struct {
-	DB                   *gorm.DB
-	Redis                *redis.Client
-	RedisAdapter         *adapter.RedisAdapter
-	ConversationChannels []*model.ConversationChannel
+	UserService         *services.UserService
+	StoryService        *services.StoryService
+	ReelsService        *services.ReelsService
+	PostService         *services.PostService
+	NotificationService *services.NotificationService
+	MessagesService     *services.MessagesService
+	GroupService        *services.GroupService
+	FriendsService      *services.FriendsService
 }

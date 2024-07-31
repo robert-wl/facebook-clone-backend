@@ -6,247 +6,58 @@ package resolver
 
 import (
 	"context"
-	"fmt"
-	"time"
-
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 )
 
 // AddFriend is the resolver for the addFriend field.
 func (r *mutationResolver) AddFriend(ctx context.Context, friendInput model.FriendInput) (*model.Friend, error) {
-	var friendModel *model.Friend
-
-	if err := r.DB.First(&friendModel, "sender_id = ? and receiver_id = ?", friendInput.Sender, friendInput.Receiver).Error; err != nil {
-		friend := &model.Friend{
-			SenderID:   friendInput.Sender,
-			ReceiverID: friendInput.Receiver,
-			Accepted:   false,
-		}
-
-		if err := r.DB.Save(&friend).Error; err != nil {
-			return nil, err
-		}
-
-		if err := r.DB.Preload("Sender").Preload("Receiver").First(&friend, "sender_id = ? and receiver_id = ?", friend.SenderID, friend.ReceiverID).Error; err != nil {
-			return nil, err
-		}
-
-		r.RedisAdapter.Del([]string{"friends", friendInput.Sender})
-		r.RedisAdapter.Del([]string{"friends", friendInput.Receiver})
-
-		go func() {
-			newNotification := &model.NewNotification{
-				Message: fmt.Sprintf("%s %s sent you a friend request", friend.Sender.FirstName, friend.Sender.LastName),
-				UserID:  friend.ReceiverID,
-				PostID:  nil,
-				ReelID:  nil,
-				StoryID: nil,
-				GroupID: nil,
-			}
-
-			if _, err := r.CreateNotification(ctx, *newNotification); err != nil {
-				return
-			}
-		}()
-
-		return friend, nil
-	} else {
-		r.RedisAdapter.Del([]string{"friends", friendInput.Sender})
-		r.RedisAdapter.Del([]string{"friends", friendInput.Receiver})
-
-		return nil, r.DB.Delete(&friendModel).Error
-	}
+	userID := ctx.Value("UserID").(string)
+	return r.FriendsService.AddFriend(userID, friendInput)
 }
 
 // AcceptFriend is the resolver for the acceptFriend field.
 func (r *mutationResolver) AcceptFriend(ctx context.Context, friend string) (*model.Friend, error) {
-	var friendModel *model.Friend
 	userID := ctx.Value("UserID").(string)
 
-	if err := r.DB.First(&friendModel, "sender_id = ? and receiver_id = ?", friend, userID).Update("Accepted", true).Error; err != nil {
-		return nil, err
-	}
-
-	r.RedisAdapter.Del([]string{"friends", userID})
-	r.RedisAdapter.Del([]string{"friends", friend})
-
-	return friendModel, nil
+	return r.FriendsService.AcceptFriend(userID, friend)
 }
 
 // RejectFriend is the resolver for the rejectFriend field.
 func (r *mutationResolver) RejectFriend(ctx context.Context, friend string) (*model.Friend, error) {
 	userID := ctx.Value("UserID").(string)
 
-	friendModel := &model.Friend{
-		SenderID:   friend,
-		ReceiverID: userID,
-		Accepted:   false,
-	}
-
-	if err := r.DB.Delete(&model.Friend{}, "(sender_id = ? AND receiver_id = ?)", friend, userID).Error; err != nil {
-		return nil, err
-	}
-
-	r.RedisAdapter.Del([]string{"friends", userID})
-	r.RedisAdapter.Del([]string{"friends", friend})
-
-	return friendModel, nil
+	return r.FriendsService.RejectFriend(userID, friend)
 }
 
 // GetFriends is the resolver for the getFriends field.
 func (r *queryResolver) GetFriends(ctx context.Context) ([]*model.User, error) {
-	var users []*model.User
-
 	userID := ctx.Value("UserID").(string)
 
-	err := r.RedisAdapter.GetOrSet([]string{"friends", userID}, &users, func() (interface{}, error) {
-		subQuery := r.DB.
-			Model(&model.Friend{}).
-			Where("((sender_id = ? OR receiver_id = ?) AND accepted = ?)", userID, userID, true).
-			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", userID)
-
-		if err := r.DB.Find(&users, "id IN (?)", subQuery).Error; err != nil {
-			return nil, err
-		}
-
-		return users, nil
-	}, 60*time.Minute)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return users, nil
+	return r.FriendsService.GetFriends(userID)
 }
 
 // GetFriendRequests is the resolver for the getFriendRequests field.
 func (r *queryResolver) GetFriendRequests(ctx context.Context) ([]*model.User, error) {
-	var users []*model.User
-
 	userID := ctx.Value("UserID").(string)
 
-	err := r.RedisAdapter.GetOrSet([]string{"friends", userID, "request"}, &users, func() (interface{}, error) {
-		subQuery := r.DB.
-			Model(&model.Friend{}).
-			Where("receiver_id = ? AND accepted = ?", userID, false).
-			Select("DISTINCT sender_id")
-
-		if err := r.DB.Find(&users, "id IN (?)", subQuery).Error; err != nil {
-			return nil, err
-		}
-
-		return users, nil
-	}, 60*time.Minute)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return users, nil
+	return r.FriendsService.GetFriendRequests(userID)
 }
 
 // GetUserFriends is the resolver for the getUserFriends field.
 func (r *queryResolver) GetUserFriends(ctx context.Context, username string) ([]*model.User, error) {
-	var user *model.User
-	var users []*model.User
-
-	if err := r.DB.First(&user, "username = ?", username).Error; err != nil {
-		return nil, err
-	}
-
-	err := r.RedisAdapter.GetOrSet([]string{"friends", user.ID}, &users, func() (interface{}, error) {
-		subQuery := r.DB.
-			Model(&model.Friend{}).
-			Where("((sender_id = ? OR receiver_id = ?) AND accepted = true)", user.ID, user.ID).
-			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", user.ID)
-
-		if err := r.DB.Find(&users, "id IN (?)", subQuery).Error; err != nil {
-			return nil, err
-		}
-
-		return users, nil
-	}, 60*time.Minute)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return users, nil
+	return r.FriendsService.GetUserFriends(username)
 }
 
 // GetUserMutuals is the resolver for the getUserMutuals field.
 func (r *queryResolver) GetUserMutuals(ctx context.Context, username string) ([]*model.User, error) {
-	var users []*model.User
-	var user *model.User
-	var friendIDs []string
-	var myFriendIDs []string
-
 	userID := ctx.Value("UserID").(string)
 
-	if err := r.DB.Find(&user, "username = ?", username).Error; err != nil {
-		return nil, err
-	}
-
-	err := r.RedisAdapter.GetOrSet([]string{"friends", userID, user.ID, "mutuals"}, &users, func() (interface{}, error) {
-		if err := r.DB.
-			Model(&model.Friend{}).
-			Where("sender_id = ? OR receiver_id = ?", user.ID, user.ID).
-			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", user.ID).
-			Find(&friendIDs).Error; err != nil {
-			return nil, err
-		}
-
-		if err := r.DB.Model(&model.Friend{}).
-			Where("(sender_id = ? OR receiver_id = ?) AND accepted = ?", userID, userID, true).
-			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", userID).Find(&myFriendIDs).Error; err != nil {
-			return nil, err
-		}
-		if err := r.DB.Find(&users, "id IN (?) AND id IN (?)", friendIDs, myFriendIDs).Error; err != nil {
-			return nil, err
-		}
-
-		return users, nil
-	}, 60*time.Minute)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return users, nil
+	return r.FriendsService.GetUserMutuals(userID, username)
 }
 
 // GetPeopleMightKnow is the resolver for the getPeopleMightKnow field.
 func (r *queryResolver) GetPeopleMightKnow(ctx context.Context) ([]*model.User, error) {
-	var userIds []string
-	var userFriendIds []string
-	var users []*model.User
 	userID := ctx.Value("UserID").(string)
 
-	err := r.RedisAdapter.GetOrSet([]string{"user", userID, "people_might_know"}, &users, func() (interface{}, error) {
-		if err := r.DB.Model(&model.Friend{}).
-			Where("(sender_id = ? OR receiver_id = ?) AND accepted = ?", userID, userID, true).
-			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", userID).Find(&userIds).Error; err != nil {
-			return nil, err
-		}
-
-		if err := r.DB.Model(&model.Friend{}).
-			Where("(sender_id IN (?) OR receiver_id IN (?)) AND accepted = ?", userIds, userIds, true).
-			Select("DISTINCT CASE WHEN sender_id IN (?) THEN receiver_id ELSE sender_id END", userIds).Find(&userFriendIds).Error; err != nil {
-			return nil, err
-		}
-
-		if err := r.DB.
-			Limit(5).
-			Find(&users, "id IN (?) AND id NOT IN (?) AND id != ?", userFriendIds, userIds, userID).Error; err != nil {
-			return nil, err
-		}
-
-		return users, nil
-	}, 60*time.Minute)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return users, nil
+	return r.FriendsService.GetPeopleMightKnow(userID)
 }

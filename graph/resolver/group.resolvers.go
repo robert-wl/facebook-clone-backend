@@ -6,605 +6,125 @@ package resolver
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"strings"
-	"time"
-
-	"github.com/google/uuid"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 )
 
 // MemberCount is the resolver for the memberCount field.
 func (r *groupResolver) MemberCount(ctx context.Context, obj *model.Group) (int, error) {
-	var count int
-	if memberCountSerialized, err := r.Redis.Get(ctx, fmt.Sprintf("group:%s:memberCount", obj.ID)).Result(); err != nil {
-		count = int(r.DB.Model(&obj).Association("Members").Count())
-
-		if countSerialized, err := json.Marshal(count); err != nil {
-			return 0, nil
-		} else {
-			r.Redis.Set(ctx, fmt.Sprintf("group:%s:memberCount", obj.ID), countSerialized, 10*time.Second)
-		}
-	} else {
-		if err := json.Unmarshal([]byte(memberCountSerialized), &count); err != nil {
-			return 0, nil
-		}
-	}
-
-	return count, nil
+	return r.GroupService.MemberCount(obj)
 }
 
 // Joined is the resolver for the joined field.
 func (r *groupResolver) Joined(ctx context.Context, obj *model.Group) (string, error) {
-	status := "not joined"
-	var member *model.Member
-
 	userID := ctx.Value("UserID").(string)
-
-	if joinedSerialized, err := r.Redis.Get(ctx, fmt.Sprintf("group:%s:joined:%s", obj.ID, userID)).Result(); err != nil {
-		if err := r.DB.First(&member, "group_id = ? AND user_id = ?", obj.ID, userID).Error; err == nil && member != nil {
-			if member.Requested && member.Approved {
-				status = "pending"
-			} else if member.Approved {
-				status = "joined"
-			} else {
-				status = "not accepted"
-			}
-		}
-
-		if joinedSerialized, err := json.Marshal(status); err != nil {
-			return "", nil
-		} else {
-			r.Redis.Set(ctx, fmt.Sprintf("group:%s:joined:%s", obj.ID, userID), joinedSerialized, 10*time.Second)
-		}
-	} else {
-		if err := json.Unmarshal([]byte(joinedSerialized), &status); err != nil {
-			return "", nil
-		}
-	}
-
-	return status, nil
+	return r.GroupService.Joined(userID, obj)
 }
 
 // IsAdmin is the resolver for the isAdmin field.
 func (r *groupResolver) IsAdmin(ctx context.Context, obj *model.Group) (bool, error) {
 	userID := ctx.Value("UserID").(string)
-
-	if isAdminSerialized, err := r.Redis.Get(ctx, fmt.Sprintf("group:%s:isAdmin:%s", obj.ID, userID)).Result(); err != nil {
-		if err := r.DB.First(&model.Member{}, "group_id = ? AND user_id = ? and role = ?", obj.ID, userID, "Admin").Error; err != nil {
-			return false, nil
-		}
-
-		if isAdminSerialized, err := json.Marshal(true); err != nil {
-			return false, nil
-		} else {
-			r.Redis.Set(ctx, fmt.Sprintf("group:%s:isAdmin:%s", obj.ID, userID), isAdminSerialized, 10*time.Second)
-		}
-	} else {
-		if isAdminSerialized == "true" {
-			return true, nil
-		}
-		return false, nil
-	}
-
-	return true, nil
+	return r.GroupService.IsAdmin(userID, obj)
 }
 
 // CreateGroup is the resolver for the createGroup field.
 func (r *mutationResolver) CreateGroup(ctx context.Context, group model.NewGroup) (*model.Group, error) {
 	userID := ctx.Value("UserID").(string)
-
-	newGroup := &model.Group{
-		ID:         uuid.NewString(),
-		Name:       group.Name,
-		About:      group.About,
-		Privacy:    group.Privacy,
-		Background: "",
-		CreatedAt:  time.Now(),
-	}
-
-	if err := r.DB.Save(&newGroup).Error; err != nil {
-		return nil, err
-	}
-
-	conversation := &model.Conversation{
-		ID: uuid.NewString(),
-	}
-
-	if err := r.DB.Save(&conversation).Error; err != nil {
-		return nil, err
-	}
-
-	conversationUser := &model.ConversationUsers{
-		ConversationID: conversation.ID,
-		UserID:         userID,
-	}
-
-	if err := r.DB.Save(&conversationUser).Error; err != nil {
-		return nil, err
-	}
-
-	member := &model.Member{
-		GroupID:  newGroup.ID,
-		UserID:   userID,
-		Approved: true,
-		Role:     "Admin",
-	}
-
-	if err := r.DB.Save(&member).Error; err != nil {
-		return nil, err
-	}
-
-	newGroup.ChatID = &conversation.ID
-
-	if err := r.DB.Save(&newGroup).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.DB.
-		Preload("Members").
-		Preload("Members.User").
-		Preload("Chat").
-		Preload("Files").
-		Preload("Files.UploadedBy").
-		First(&newGroup).Error; err != nil {
-		return nil, err
-	}
-
-	if group.Privacy != "public" {
-		return newGroup, nil
-	}
-
-	go func() {
-		var userIDs []string
-		var user *model.User
-
-		if err := r.DB.First(&user, "id = ?", userID).Error; err != nil {
-			return
-		}
-
-		subQuery := r.DB.
-			Model(&model.Friend{}).
-			Where("(sender_id = ? OR receiver_id = ? AND accepted = ?)", userID, userID, true).
-			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", userID)
-
-		subQueryBlocked := r.DB.
-			Model(&model.BlockNotification{}).
-			Where("(sender_id = ?)", userID).
-			Select("DISTINCT receiver_id")
-
-		if err := r.DB.
-			Model(&model.User{}).
-			Where("id IN (?) AND id NOT IN (?) AND id != ?", subQuery, subQueryBlocked, userID).
-			Select("id").
-			Find(&userIDs).Error; err != nil {
-			return
-		}
-
-		for _, userId := range userIDs {
-
-			newNotification := &model.NewNotification{
-				Message: fmt.Sprintf("%s %s created a new group", user.FirstName, user.LastName),
-				UserID:  userId,
-				PostID:  nil,
-				ReelID:  nil,
-				StoryID: nil,
-				GroupID: &newGroup.ID,
-			}
-
-			if _, err := r.CreateNotification(ctx, *newNotification); err != nil {
-				continue
-			}
-		}
-	}()
-
-	return newGroup, nil
+	return r.GroupService.CreateGroup(userID, group)
 }
 
 // InviteToGroup is the resolver for the inviteToGroup field.
 func (r *mutationResolver) InviteToGroup(ctx context.Context, groupID string, userID string) (*model.Member, error) {
-	var user *model.User
+	userIDSender := ctx.Value("UserID").(string)
 
-	member := &model.Member{
-		GroupID:   groupID,
-		UserID:    userID,
-		Approved:  false,
-		Role:      "member",
-		Requested: false,
-	}
-
-	if err := r.DB.Save(&member).Error; err != nil {
-		return nil, err
-	}
-
-	userIDCtx := ctx.Value("UserID").(string)
-
-	if err := r.DB.Find(&user, "id = ?", userIDCtx).Error; err != nil {
-		return nil, err
-	}
-
-	go func() {
-		newNotification := &model.NewNotification{
-			Message: fmt.Sprintf("%s %s invited you to join a group", user.FirstName, user.LastName),
-			UserID:  userID,
-			PostID:  nil,
-			ReelID:  nil,
-			StoryID: nil,
-			GroupID: &groupID,
-		}
-
-		if _, err := r.CreateNotification(ctx, *newNotification); err != nil {
-			return
-		}
-	}()
-
-	return member, nil
+	return r.GroupService.InviteToGroup(userIDSender, groupID, userID)
 }
 
 // HandleRequest is the resolver for the handleRequest field.
 func (r *mutationResolver) HandleRequest(ctx context.Context, groupID string) (*model.Member, error) {
 	userID := ctx.Value("UserID").(string)
-	var member *model.Member
 
-	if err := r.DB.First(&member, "group_id = ? AND user_id = ?", groupID, userID).Error; err != nil {
-		member = &model.Member{
-			GroupID:   groupID,
-			UserID:    userID,
-			Requested: true,
-			Approved:  false,
-			Role:      "member",
-		}
-
-		if err := r.DB.Save(&member).Error; err != nil {
-			return nil, err
-		}
-
-		return member, nil
-	}
-
-	if member.Approved == false {
-		member.Requested = false
-		member.Approved = true
-
-		if err := r.DB.Save(&member).Error; err != nil {
-			return nil, err
-		}
-
-		var group *model.Group
-
-		if err := r.DB.First(&group, "id = ?", groupID).Error; err != nil {
-			return nil, err
-		}
-
-		conversationUser := &model.ConversationUsers{
-			ConversationID: *group.ChatID,
-			UserID:         member.UserID,
-		}
-
-		if err := r.DB.Save(&conversationUser).Error; err != nil {
-			return nil, err
-		}
-		r.Redis.Del(ctx, fmt.Sprintf("group:%s:memberCount", groupID))
-		r.Redis.Del(ctx, fmt.Sprintf("group:%s", groupID))
-		return member, nil
-	}
-
-	if err := r.DB.Delete(&member).Error; err != nil {
-		return nil, err
-	}
-	r.Redis.Del(ctx, fmt.Sprintf("group:%s:joined:%s", groupID, userID))
-	//TODO ADD NOTIFICATION
-
-	return member, nil
+	return r.GroupService.HandleRequest(userID, groupID)
 }
 
 // UpdateGroupBackground is the resolver for the updateGroupBackground field.
 func (r *mutationResolver) UpdateGroupBackground(ctx context.Context, groupID string, background string) (*model.Group, error) {
-	var group *model.Group
-
-	if err := r.DB.First(&group, "id = ?", groupID).Update("background", background).Error; err != nil {
-		return nil, err
-	}
-	r.Redis.Del(ctx, fmt.Sprintf("group:%s", groupID))
-	return group, nil
+	return r.GroupService.UpdateGroupBackground(groupID, background)
 }
 
 // UploadFile is the resolver for the uploadFile field.
 func (r *mutationResolver) UploadFile(ctx context.Context, groupID string, file model.NewGroupFile) (*model.GroupFile, error) {
 	userID := ctx.Value("UserID").(string)
-
-	newFile := &model.GroupFile{
-		ID:         uuid.NewString(),
-		GroupID:    groupID,
-		Name:       file.Name,
-		Type:       file.Type,
-		URL:        file.URL,
-		UserID:     userID,
-		UploadedAt: time.Now(),
-	}
-
-	var fileCount int64
-	count := 0
-
-	for {
-		if err := r.DB.Find(&model.GroupFile{}, "group_id = ? AND name = ? AND type = ?", newFile.GroupID, newFile.Name, newFile.Type).Count(&fileCount).Error; err != nil {
-			break
-		}
-
-		if fileCount == 0 {
-			break
-		}
-
-		count++
-		split := strings.Split(file.Name, ".")
-
-		if len(split) >= 2 {
-			newFile.Name = strings.Join(split[:len(split)-1], "") + fmt.Sprintf(" (%d)", count) + "." + split[len(split)-1]
-		} else {
-			newFile.Name = fmt.Sprintf("%s (%d)", file.Name, count)
-		}
-	}
-
-	if err := r.DB.Save(&newFile).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.DB.
-		Preload("UploadedBy").
-		First(&newFile, "id = ?", newFile.ID).Error; err != nil {
-		return nil, err
-	}
-
-	return newFile, nil
+	return r.GroupService.UploadFile(userID, groupID, file)
 }
 
 // DeleteFile is the resolver for the deleteFile field.
 func (r *mutationResolver) DeleteFile(ctx context.Context, fileID string) (*bool, error) {
-	boolean := true
-	if err := r.DB.Delete(&model.GroupFile{}, "id = ?", fileID).Error; err != nil {
-		boolean = false
-		return &boolean, err
-	}
-
-	return &boolean, nil
+	return r.GroupService.DeleteFile(fileID)
 }
 
 // ApproveMember is the resolver for the approveMember field.
 func (r *mutationResolver) ApproveMember(ctx context.Context, groupID string, userID string) (*model.Member, error) {
-	var member *model.Member
-
-	if err := r.DB.First(&member, "group_id = ? AND user_id = ?", groupID, userID).Update("approved", true).Update("requested", false).Error; err != nil {
-		return nil, err
-	}
-	r.Redis.Get(ctx, fmt.Sprintf("group:%s:joined:%s", groupID, userID))
-	return member, nil
+	return r.GroupService.ApproveMember(groupID, userID)
 }
 
 // DenyMember is the resolver for the denyMember field.
 func (r *mutationResolver) DenyMember(ctx context.Context, groupID string, userID string) (*model.Member, error) {
-	var member *model.Member
-
-	if err := r.DB.Delete(&member, "group_id = ? AND user_id = ?", groupID, userID).Error; err != nil {
-		return nil, err
-	}
-	r.Redis.Del(ctx, fmt.Sprintf("group:%s:joined:%s", groupID, userID))
-	r.Redis.Del(ctx, fmt.Sprintf("group:%s", groupID))
-	return member, nil
+	return r.GroupService.DenyMember(groupID, userID)
 }
 
 // KickMember is the resolver for the kickMember field.
 func (r *mutationResolver) KickMember(ctx context.Context, groupID string, userID string) (*bool, error) {
-	boolean := true
-	if err := r.DB.Delete(&model.Member{}, "group_id = ? AND user_id = ?", groupID, userID).Error; err != nil {
-		boolean = false
-		return &boolean, err
-	}
-	r.Redis.Del(ctx, fmt.Sprintf("group:%s:joined:%s", groupID, userID))
-	r.Redis.Del(ctx, fmt.Sprintf("group:%s", groupID))
-	return &boolean, nil
+	return r.GroupService.KickMember(groupID, userID)
 }
 
 // LeaveGroup is the resolver for the leaveGroup field.
 func (r *mutationResolver) LeaveGroup(ctx context.Context, groupID string) (string, error) {
-	var member *model.Member
 	userID := ctx.Value("UserID").(string)
-
-	if err := r.DB.First(&member, "group_id = ? AND user_id = ?", groupID, userID).Error; err != nil {
-		return "not found", err
-	}
-
-	if member.Role == "Admin" {
-		var adminCount int64
-		var memberCount int64
-
-		if err := r.DB.Find(&model.Member{}, "group_id = ? AND role = ?", groupID, "Admin").Count(&adminCount).Error; err != nil {
-			return "not found", err
-		}
-
-		if err := r.DB.Find(&model.Member{}, "group_id = ? AND role = ?", groupID, "member").Count(&memberCount).Error; err != nil {
-			return "not found", err
-		}
-
-		if adminCount == 1 && memberCount != 0 {
-			return "not allowed", nil
-		}
-	}
-
-	if err := r.DB.Delete(&model.Member{}, "group_id = ? AND user_id = ?", groupID, userID).Error; err != nil {
-		return "not found", err
-	}
-
-	var memberCount int64
-
-	if err := r.DB.Find(&model.Member{}, "group_id = ?", groupID).Count(&memberCount).Error; err != nil {
-		return "not found", err
-	}
-
-	if memberCount == 0 {
-		if err := r.DB.Delete(&model.Group{}, "id = ?", groupID).Error; err != nil {
-			return "not found", err
-		}
-	}
-
-	r.Redis.Del(ctx, fmt.Sprintf("group:%s:joined:%s", groupID, userID))
-	r.Redis.Del(ctx, fmt.Sprintf("group:%s:isAdmin:%s", groupID, userID))
-	r.Redis.Del(ctx, fmt.Sprintf("group:%s", groupID))
-	return "success", nil
+	return r.GroupService.LeaveGroup(userID, groupID)
 }
 
 // PromoteMember is the resolver for the promoteMember field.
 func (r *mutationResolver) PromoteMember(ctx context.Context, groupID string, userID string) (*model.Member, error) {
-	var member *model.Member
-
-	if err := r.DB.First(&member, "group_id = ? AND user_id = ?", groupID, userID).Update("role", "Admin").Error; err != nil {
-		return nil, err
-	}
-
-	r.Redis.Del(ctx, fmt.Sprintf("group:%s:isAdmin:%s", groupID, userID))
-	return member, nil
+	return r.GroupService.PromoteMember(groupID, userID)
 }
 
 // GetGroup is the resolver for the getGroup field.
 func (r *queryResolver) GetGroup(ctx context.Context, id string) (*model.Group, error) {
-	var group *model.Group
-
-	if groupSerialized, err := r.Redis.Get(ctx, fmt.Sprintf("group:%s", id)).Result(); err != nil {
-		subQuery := r.DB.
-			Select("user_id").
-			Where("group_id = ?", id).
-			Table("members")
-
-		userID := ctx.Value("UserID").(string)
-
-		if err := r.DB.
-			Preload("Members").
-			Preload("Members.User").
-			Preload("Chat").
-			Preload("Posts").
-			Preload("Posts.User").
-			Find(&group, "id = ? AND (privacy = ? or (privacy = ? AND ? IN (?)))", id, "public", "private", userID, subQuery).Error; err != nil {
-			return nil, err
-		}
-
-		if groupSerialized, err := json.Marshal(group); err != nil {
-			return nil, err
-		} else {
-			r.Redis.Set(ctx, fmt.Sprintf("group:%s", id), groupSerialized, 10*time.Second)
-		}
-	} else {
-		if err := json.Unmarshal([]byte(groupSerialized), &group); err != nil {
-			return nil, err
-		}
-	}
-
-	return group, nil
+	userID := ctx.Value("UserID").(string)
+	return r.GroupService.GetGroup(userID, id)
 }
 
 // GetGroupInvite is the resolver for the getGroupInvite field.
 func (r *queryResolver) GetGroupInvite(ctx context.Context, id string) ([]*model.User, error) {
-	var friendIDs []string
-	var friendMemberIDs []string
-	var users []*model.User
 	userID := ctx.Value("UserID").(string)
-
-	if err := r.DB.
-		Model(&model.Friend{}).
-		Where("sender_id = ? OR receiver_id = ?", userID, userID).
-		Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", userID).
-		Find(&friendIDs).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.DB.
-		Model(&model.Member{}).
-		Where("group_id = ? AND user_id IN (?)", id, friendIDs).
-		Select("user_id").
-		Find(&friendMemberIDs).Error; err != nil {
-		return nil, err
-	}
-
-	if len(friendMemberIDs) != 0 {
-		if err := r.DB.Find(&users, "id IN (?) AND id NOT IN (?)", friendIDs, friendMemberIDs).Error; err != nil {
-			return nil, err
-		}
-	} else {
-		if err := r.DB.Find(&users, "id IN (?)", friendIDs).Error; err != nil {
-			return nil, err
-		}
-	}
-
-	return users, nil
+	return r.GroupService.GetGroupInvite(userID, id)
 }
 
 // GetGroups is the resolver for the getGroups field.
 func (r *queryResolver) GetGroups(ctx context.Context) ([]*model.Group, error) {
-	var groups []*model.Group
-
-	if err := r.DB.Find(&groups, "privacy = ?", "public").Error; err != nil {
-		return nil, err
-	}
-
-	return groups, nil
+	return r.GroupService.GetGroups()
 }
 
 // GetJoinedGroups is the resolver for the getJoinedGroups field.
 func (r *queryResolver) GetJoinedGroups(ctx context.Context) ([]*model.Group, error) {
-	var groupIDs []*string
-	var groups []*model.Group
-
 	userID := ctx.Value("UserID").(string)
-
-	if err := r.DB.Model(&model.Member{}).Where("user_id = ? AND approved = ? AND requested = ?", userID, true, false).Select("group_id").Find(&groupIDs).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.DB.Preload("Chat").Find(&groups, "id in (?)", groupIDs).Error; err != nil {
-		return nil, err
-	}
-
-	return groups, nil
+	return r.GroupService.GetJoinedGroups(userID)
 }
 
 // GetGroupFiles is the resolver for the getGroupFiles field.
 func (r *queryResolver) GetGroupFiles(ctx context.Context, groupID string) ([]*model.GroupFile, error) {
-	var files []*model.GroupFile
-
-	if err := r.DB.
-		Order("uploaded_at ASC").
-		Preload("UploadedBy").
-		Find(&files, "group_id = ?", groupID).Error; err != nil {
-		return nil, err
-	}
-
-	return files, nil
+	return r.GroupService.GetGroupFiles(groupID)
 }
 
 // GetJoinRequests is the resolver for the getJoinRequests field.
 func (r *queryResolver) GetJoinRequests(ctx context.Context, groupID string) ([]*model.Member, error) {
-	var members []*model.Member
-
-	if err := r.DB.Preload("User").
-		Find(&members, "group_id = ? AND requested = ? AND approved = ?", groupID, true, false).Error; err != nil {
-		return nil, err
-	}
-
-	return members, nil
+	return r.GroupService.GetJoinRequests(groupID)
 }
 
 // GetFilteredGroups is the resolver for the getFilteredGroups field.
 func (r *queryResolver) GetFilteredGroups(ctx context.Context, filter string, pagination model.Pagination) ([]*model.Group, error) {
-	var groups []*model.Group
-
-	if err := r.DB.
-		Offset(pagination.Start).
-		Limit(pagination.Limit).
-		Find(&groups, "LOWER(name) LIKE LOWER(?) OR LOWER(about) LIKE LOWER(?)", "%"+filter+"%", "%"+filter+"%").Error; err != nil {
-		return nil, err
-	}
-
-	return groups, nil
+	return r.GroupService.GetFilteredGroups(filter, pagination)
 }
 
 // Group returns graph.GroupResolver implementation.

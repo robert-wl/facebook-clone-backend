@@ -5,7 +5,8 @@ import (
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/directives"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/adapter"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/auth"
-	database2 "github.com/yahkerobertkertasnya/facebook-clone-backend/internal/database"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/database"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/services"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils"
 	"log"
 	"net/http"
@@ -41,10 +42,27 @@ func main() {
 	router.Use(cors.Handler)
 	router.Use(auth.AuthMiddleware)
 
+	service := services.NewService(database.GetDBInstance(), adapter.NewRedisCacheAdapter())
+	messageAdapter := adapter.NewMessageAdapter()
+
+	userService := services.NewUserService(service)
+	reelsService := services.NewReelsService(service)
+	notificationService := services.NewNotificationService(service)
+	messagesService := services.NewMessagesService(service, messageAdapter)
+	postService := services.NewPostService(service, notificationService, messagesService)
+	storyService := services.NewStoryService(service, notificationService)
+	groupService := services.NewGroupService(service, notificationService)
+	friendsService := services.NewFriendsService(service, notificationService)
+
 	c := graph.Config{Resolvers: &resolver.Resolver{
-		DB:           database2.GetDBInstance(),
-		Redis:        database2.GetRedisInstance(),
-		RedisAdapter: adapter.NewRedisCacheAdapter(),
+		UserService:         userService,
+		StoryService:        storyService,
+		ReelsService:        reelsService,
+		PostService:         postService,
+		NotificationService: notificationService,
+		MessagesService:     messagesService,
+		GroupService:        groupService,
+		FriendsService:      friendsService,
 	}}
 
 	c.Directives.Auth = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
@@ -61,9 +79,9 @@ func main() {
 		},
 	})
 
-	// database.DropDatabase()
-	// database.MigrateDatabase()
-	// database.FakeData()
+	database.DropDatabase()
+	database.MigrateDatabase()
+	database.FakeData()
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})

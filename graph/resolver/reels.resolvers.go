@@ -6,12 +6,6 @@ package resolver
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"strconv"
-	"time"
-
-	"github.com/google/uuid"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 )
@@ -19,342 +13,62 @@ import (
 // CreateReel is the resolver for the createReel field.
 func (r *mutationResolver) CreateReel(ctx context.Context, reel model.NewReel) (*model.Reel, error) {
 	userID := ctx.Value("UserID").(string)
-
-	newReel := &model.Reel{
-		ID:           uuid.NewString(),
-		UserID:       userID,
-		Content:      reel.Content,
-		Video:        reel.Video,
-		LikeCount:    0,
-		CommentCount: 0,
-		ShareCount:   0,
-		CreatedAt:    time.Now(),
-	}
-
-	if err := r.DB.Save(&newReel).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.DB.
-		Preload("User").
-		First(&newReel).Error; err != nil {
-		return nil, err
-	}
-
-	go func() {
-		var userIDs []string
-		var user *model.User
-
-		if err := r.DB.First(&user, "id = ?", userID).Error; err != nil {
-			return
-		}
-
-		subQuery := r.DB.
-			Model(&model.Friend{}).
-			Where("(sender_id = ? OR receiver_id = ? AND accepted = ?)", userID, userID, true).
-			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", userID)
-
-		subQueryBlocked := r.DB.
-			Model(&model.BlockNotification{}).
-			Where("(sender_id = ?)", userID).
-			Select("DISTINCT receiver_id")
-
-		if err := r.DB.
-			Model(&model.User{}).
-			Where("id IN (?) AND id NOT IN (?) AND id != ?", subQuery, subQueryBlocked, userID).
-			Select("id").
-			Find(&userIDs).Error; err != nil {
-			return
-		}
-
-		for _, userId := range userIDs {
-
-			newNotification := &model.NewNotification{
-				Message: fmt.Sprintf("%s %s released a new reel", user.FirstName, user.LastName),
-				UserID:  userId,
-				PostID:  nil,
-				ReelID:  &newReel.ID,
-				StoryID: nil,
-				GroupID: nil,
-			}
-
-			if _, err := r.CreateNotification(ctx, *newNotification); err != nil {
-				continue
-			}
-		}
-	}()
-
-	return newReel, nil
+	return r.ReelsService.CreateReel(userID, reel)
 }
 
 // CreateReelComment is the resolver for the createReelComment field.
 func (r *mutationResolver) CreateReelComment(ctx context.Context, comment model.NewReelComment) (*model.ReelComment, error) {
 	userID := ctx.Value("UserID").(string)
-
-	newComment := &model.ReelComment{
-		ID:              uuid.NewString(),
-		UserID:          userID,
-		Content:         comment.Content,
-		LikeCount:       0,
-		ReplyCount:      0,
-		ParentReelID:    comment.ParentReel,
-		ParentCommentID: comment.ParentComment,
-		CreatedAt:       time.Time{},
-	}
-
-	if err := r.DB.Save(&newComment).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.DB.
-		Preload("User").
-		Preload("ParentReel").
-		Preload("ParentReel.User").
-		Preload("ParentComment").
-		Preload("ParentComment.User").
-		First(&newComment).Error; err != nil {
-		return nil, err
-	}
-
-	if comment.ParentComment != nil {
-		r.Redis.Del(ctx, fmt.Sprintf("reel:%s:comments", *comment.ParentReel))
-		r.Redis.Del(ctx, fmt.Sprintf("reel:%s", *comment.ParentReel))
-	} else if comment.ParentReel != nil {
-		r.Redis.Del(ctx, fmt.Sprintf("reelComment:%s:replyCount", *comment.ParentReel))
-	}
-
-	return newComment, nil
+	return r.ReelsService.CreateReelComment(userID, comment)
 }
 
 // LikeReel is the resolver for the likeReel field.
 func (r *mutationResolver) LikeReel(ctx context.Context, reelID string) (*model.ReelLike, error) {
 	userID := ctx.Value("UserID").(string)
-
-	reelLike := &model.ReelLike{
-		ReelID: reelID,
-		UserID: userID,
-	}
-
-	if err := r.DB.First(&model.ReelLike{}, "reel_id = ? and user_id = ?", reelID, userID).Error; err == nil {
-
-		if err := r.DB.Delete(&reelLike).Error; err != nil {
-			return nil, err
-		}
-
-		return reelLike, nil
-	}
-
-	if err := r.DB.Save(&reelLike).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.DB.
-		Preload("User").
-		First(&reelLike).Error; err != nil {
-		return nil, err
-	}
-
-	r.Redis.Del(ctx, fmt.Sprintf("reel:%s", reelID))
-
-	return reelLike, nil
+	return r.ReelsService.LikeReel(userID, reelID)
 }
 
 // LikeReelComment is the resolver for the likeReelComment field.
 func (r *mutationResolver) LikeReelComment(ctx context.Context, reelCommentID string) (*model.ReelCommentLike, error) {
 	userID := ctx.Value("UserID").(string)
-
-	reelCommentLike := &model.ReelCommentLike{
-		ReelCommentID: reelCommentID,
-		UserID:        userID,
-	}
-
-	if err := r.DB.First(&model.ReelCommentLike{}, "reel_comment_id = ? and user_id = ?", reelCommentID, userID).Error; err == nil {
-
-		if err := r.DB.Delete(&reelCommentLike).Error; err != nil {
-			return nil, err
-		}
-
-		return reelCommentLike, nil
-	}
-
-	if err := r.DB.Save(&reelCommentLike).Error; err != nil {
-		return nil, err
-	}
-
-	if err := r.DB.
-		Preload("User").
-		First(&reelCommentLike).Error; err != nil {
-		return nil, err
-	}
-
-	r.Redis.Del(ctx, "reelComment:%s:like:%s", reelCommentID, userID)
-	r.Redis.Del(ctx, fmt.Sprintf("reelComment:%s:likeCount", reelCommentID))
-
-	return reelCommentLike, nil
+	return r.ReelsService.LikeReelComment(userID, reelCommentID)
 }
 
 // GetReels is the resolver for the getReels field.
 func (r *queryResolver) GetReels(ctx context.Context) ([]*string, error) {
-	var reelsID []*string
-
-	if err := r.DB.
-		Model(&model.Reel{}).
-		Order("RANDOM()").
-		Select("id").
-		Find(&reelsID).Error; err != nil {
-		return nil, err
-	}
-
-	return reelsID, nil
+	return r.ReelsService.GetReels()
 }
 
 // GetReel is the resolver for the getReel field.
 func (r *queryResolver) GetReel(ctx context.Context, id string) (*model.Reel, error) {
-	var reel *model.Reel
-
 	userID := ctx.Value("UserID").(string)
-
-	if reelSerialized, err := r.Redis.Get(ctx, fmt.Sprintf("reel:%s", id)).Result(); err != nil {
-		if err := r.DB.
-			Preload("User").
-			Preload("Likes").
-			Preload("Comments").
-			First(&reel, "id = ?", id).Error; err != nil {
-			return nil, err
-		}
-
-		reel.LikeCount = int(r.DB.Model(reel).Association("Likes").Count())
-		reel.CommentCount = int(r.DB.Model(reel).Association("Comments").Count())
-
-		liked := false
-
-		if err := r.DB.First(&model.ReelLike{}, "reel_id = ? AND user_id = ?", id, userID).Error; err == nil {
-			liked = true
-		}
-
-		reel.Liked = &liked
-
-		if serialized, err := json.Marshal(reel); err != nil {
-			return nil, err
-		} else {
-			r.Redis.Set(ctx, fmt.Sprintf("reel:%s", id), serialized, 10*time.Minute)
-		}
-	} else {
-		if err := json.Unmarshal([]byte(reelSerialized), &reel); err != nil {
-			return nil, err
-		}
-	}
-
-	return reel, nil
+	return r.ReelsService.GetReel(userID, id)
 }
 
 // GetReelComments is the resolver for the getReelComments field.
 func (r *queryResolver) GetReelComments(ctx context.Context, reelID string) ([]*model.ReelComment, error) {
-	var comments []*model.ReelComment
-
-	if reelCommentsSerialized, err := r.Redis.Get(ctx, fmt.Sprintf("reel:%s:comments", reelID)).Result(); err != nil {
-		if err := r.DB.
-			Preload("User").
-			Preload("ParentReel").
-			Preload("ParentComment").
-			Preload("Likes").
-			Preload("Comments").
-			Preload("Comments.User").
-			Find(&comments, "parent_reel_id = ?", reelID).Error; err != nil {
-			return nil, err
-		}
-
-		if serialized, err := json.Marshal(comments); err != nil {
-			return nil, err
-		} else {
-			r.Redis.Set(ctx, fmt.Sprintf("reel:%s:comments", reelID), serialized, 10*time.Minute)
-		}
-	} else {
-
-		if err := json.Unmarshal([]byte(reelCommentsSerialized), &comments); err != nil {
-			return nil, err
-		}
-	}
-
-	return comments, nil
+	return r.ReelsService.GetReelComments(reelID)
 }
 
 // LikeCount is the resolver for the likeCount field.
 func (r *reelCommentResolver) LikeCount(ctx context.Context, obj *model.ReelComment) (int, error) {
-	var count int
-	if likeCountSerialized, err := r.Redis.Get(ctx, fmt.Sprintf("reelComment:%s:likeCount", obj.ID)).Result(); err != nil {
-		count = int(r.DB.Model(obj).Association("Likes").Count())
-
-		r.Redis.Set(ctx, fmt.Sprintf("reelComment:%s:likeCount", obj.ID), count, 10*time.Minute)
-	} else {
-		if count, err = strconv.Atoi(likeCountSerialized); err != nil {
-			return 0, err
-		}
-	}
-	return count, nil
+	return r.ReelsService.LikeCount(obj)
 }
 
 // ReplyCount is the resolver for the replyCount field.
 func (r *reelCommentResolver) ReplyCount(ctx context.Context, obj *model.ReelComment) (int, error) {
-	var count int
-
-	if replyCountSerialized, err := r.Redis.Get(ctx, fmt.Sprintf("reelComment:%s:replyCount", obj.ID)).Result(); err != nil {
-		count = int(r.DB.Model(obj).Association("Comments").Count())
-
-		r.Redis.Set(ctx, fmt.Sprintf("reelComment:%s:replyCount", obj.ID), count, 10*time.Minute)
-	} else {
-		if count, err = strconv.Atoi(replyCountSerialized); err != nil {
-			return 0, err
-		}
-	}
-
-	return count, nil
+	return r.ReelsService.ReplyCount(obj)
 }
 
 // Comments is the resolver for the comments field.
 func (r *reelCommentResolver) Comments(ctx context.Context, obj *model.ReelComment) ([]*model.ReelComment, error) {
-	var comments []*model.ReelComment
-
-	if commentsSerialized, err := r.Redis.Get(ctx, fmt.Sprintf("reelComment:%s:comments", obj.ID)).Result(); err != nil {
-		if err := r.DB.Preload("User").Find(&comments, "parent_comment_id = ?", obj.ID).Error; err != nil {
-			return nil, err
-		}
-
-		if serialized, err := json.Marshal(comments); err != nil {
-			return nil, err
-		} else {
-			r.Redis.Set(ctx, fmt.Sprintf("reelComment:%s:comments", obj.ID), serialized, 10*time.Minute)
-		}
-	} else {
-
-		if err := json.Unmarshal([]byte(commentsSerialized), &comments); err != nil {
-			return nil, err
-		}
-	}
-
-	return comments, nil
+	return r.ReelsService.Comments(obj)
 }
 
 // Liked is the resolver for the liked field.
 func (r *reelCommentResolver) Liked(ctx context.Context, obj *model.ReelComment) (*bool, error) {
-	var count int64
-	boolean := false
 	userID := ctx.Value("UserID").(string)
-
-	if likedSerialized, err := r.Redis.Get(ctx, fmt.Sprintf("reelComment:%s:like:%s", obj.ID, userID)).Result(); err != nil {
-		if err := r.DB.Find(&model.ReelCommentLike{}, "reel_comment_id = ? and user_id = ?", obj.ID, userID).Count(&count).Error; err == nil && count != 0 {
-			boolean = true
-		}
-
-		r.Redis.Set(ctx, fmt.Sprintf("reelComment:%s:like:%s", obj.ID, userID), boolean, 10*time.Minute)
-
-	} else {
-		if likedSerialized == "true" {
-			boolean = true
-		}
-	}
-
-	return &boolean, nil
+	return r.ReelsService.Liked(userID, obj)
 }
 
 // ReelComment returns graph.ReelCommentResolver implementation.

@@ -298,10 +298,10 @@ func generateConversation(users []model.User) {
 				continue
 			}
 
+			fmt.Println("Generating Conversation")
 			sender := randUser[i]
 			receiver := randUser[j]
 
-			fmt.Println("Generating Conversation")
 			conversation := model.Conversation{
 				ID: uuid.NewString(),
 			}
@@ -322,7 +322,6 @@ func generateConversation(users []model.User) {
 			db.Create(&cUser2)
 		}
 	}
-
 }
 
 func FakeData() {
