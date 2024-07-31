@@ -2,13 +2,13 @@ package database
 
 import (
 	"fmt"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils"
 	"math/rand"
 	"time"
 
 	"github.com/go-faker/faker/v4"
 	"github.com/google/uuid"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
 )
 
 const timeLayout = "2006-01-02 15:04:05"
@@ -88,7 +88,7 @@ func generateUser() []model.User {
 	for i := 0; i < 40; i++ {
 		fmt.Println("Generating User")
 
-		pw, _ := helper.EncryptPassword("password")
+		pw, _ := utils.EncryptPassword("password")
 
 		fn := faker.FirstName()
 		ln := faker.LastName()

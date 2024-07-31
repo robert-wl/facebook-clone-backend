@@ -3,7 +3,7 @@ package database
 import (
 	"fmt"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -14,7 +14,7 @@ const defaultDatabase = "host=localhost user=postgres password=postgres dbname=f
 
 func GetDBInstance() *gorm.DB {
 	if database == nil {
-		dsn := helper.GetDotENVVariable("DATABASE_URL", defaultDatabase)
+		dsn := utils.GetDotENVVariable("DATABASE_URL", defaultDatabase)
 
 		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 

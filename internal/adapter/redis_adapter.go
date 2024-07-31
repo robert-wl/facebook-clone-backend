@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/database"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/database"
 	"reflect"
 	"strings"
 	"time"

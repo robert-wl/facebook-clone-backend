@@ -1,10 +1,10 @@
-package firebase
+package database
 
 import (
 	"context"
 	"firebase.google.com/go/storage"
 	"fmt"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils"
 
 	firebase "firebase.google.com/go"
 	"google.golang.org/api/option"
@@ -18,7 +18,7 @@ var client *storage.Client
 func GetAppInstance() (*firebase.App, error) {
 
 	if firebaseApp == nil {
-		credential := helper.GetDotENVVariable("FIREBASE_URL")
+		credential := utils.GetDotENVVariable("FIREBASE_URL", "")
 
 		fmt.Println(credential)
 

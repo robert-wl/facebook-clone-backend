@@ -123,6 +123,8 @@ func (r *mutationResolver) SendMessage(ctx context.Context, conversationID strin
 		}
 	}()
 
+	r.RedisAdapter.Del([]string{"conversation", conversationID})
+
 	return messageModel, nil
 }
 
@@ -195,40 +197,41 @@ func (r *subscriptionResolver) ViewConversation(ctx context.Context, conversatio
 
 	var message []*model.Message
 
-	if err := r.DB.First(&model.Conversation{}, "id = ?", conversationID).Error; err != nil {
-		close(channel)
-		return nil, err
-	}
+	err := r.RedisAdapter.GetOrSet([]string{"conversation", conversationID}, &message, func() (interface{}, error) {
+		if err := r.DB.First(&model.Conversation{}, "id = ?", conversationID).Error; err != nil {
+			return nil, err
+		}
 
-	if err := r.DB.
-		Order("created_at DESC").
-		Preload("Sender").
-		Preload("Post").
-		Preload("Post.User").
-		Find(&message, "conversation_id = ?", conversationID).Error; err != nil {
+		if err := r.DB.
+			Order("created_at DESC").
+			Preload("Sender").
+			Preload("Post").
+			Preload("Post.User").
+			Find(&message, "conversation_id = ?", conversationID).Error; err != nil {
+			return nil, err
+		}
+
+		return message, nil
+	}, 10*time.Minute)
+
+	if err != nil {
 		close(channel)
 		return nil, err
 	}
 
 	go func() {
-		for {
-			time.Sleep(1 * time.Second)
-			select {
-			case <-ctx.Done():
-				var convChannel []*model.ConversationChannel
+		<-ctx.Done()
+		var convChannel []*model.ConversationChannel
 
-				for _, conv := range r.ConversationChannels {
-					if conv.ConversationID != conversationID {
-						convChannel = append(convChannel, conv)
-					}
-				}
-
-				r.ConversationChannels = convChannel
-
-				close(channel)
-				return
+		for _, conv := range r.ConversationChannels {
+			if conv.ConversationID != conversationID {
+				convChannel = append(convChannel, conv)
 			}
 		}
+
+		r.ConversationChannels = convChannel
+
+		close(channel)
 	}()
 
 	channel <- message

@@ -2,6 +2,14 @@ package main
 
 import (
 	"context"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/directives"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/adapter"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/auth"
+	database2 "github.com/yahkerobertkertasnya/facebook-clone-backend/internal/database"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils"
+	"log"
+	"net/http"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -11,22 +19,15 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	cors2 "github.com/rs/cors"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/adapter"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/database"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/resolver"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper/directives"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/middleware"
-	"log"
-	"net/http"
 )
 
 const defaultPort = "8080"
 
 func main() {
 
-	port := helper.GetDotENVVariable("PORT", defaultPort)
+	port := utils.GetDotENVVariable("PORT", defaultPort)
 
 	router := chi.NewRouter()
 
@@ -38,11 +39,11 @@ func main() {
 	})
 
 	router.Use(cors.Handler)
-	router.Use(middleware.AuthMiddleware)
+	router.Use(auth.AuthMiddleware)
 
 	c := graph.Config{Resolvers: &resolver.Resolver{
-		DB:           database.GetDBInstance(),
-		Redis:        database.GetRedisInstance(),
+		DB:           database2.GetDBInstance(),
+		Redis:        database2.GetRedisInstance(),
 		RedisAdapter: adapter.NewRedisCacheAdapter(),
 	}}
 
@@ -60,7 +61,9 @@ func main() {
 		},
 	})
 
-	//database.FakeData()
+	// database.DropDatabase()
+	// database.MigrateDatabase()
+	// database.FakeData()
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})

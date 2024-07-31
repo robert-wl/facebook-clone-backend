@@ -7,12 +7,13 @@ package resolver
 import (
 	"context"
 	"fmt"
+	helper2 "github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils/mail"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper/mail"
-	"time"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -34,7 +35,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		Theme:      "light",
 	}
 
-	if hashed, err := helper.EncryptPassword(input.Password); err != nil {
+	if hashed, err := helper2.EncryptPassword(input.Password); err != nil {
 		return nil, err
 	} else {
 		user.Password = hashed
@@ -92,11 +93,11 @@ func (r *mutationResolver) AuthenticateUser(ctx context.Context, email string, p
 		return "", fmt.Errorf("user is not active")
 	}
 
-	if !helper.ComparePassword(user.Password, password) {
+	if !helper2.ComparePassword(user.Password, password) {
 		return "", fmt.Errorf("incorrect password")
 	}
 
-	return helper.CreateJWT(user.ID)
+	return helper2.CreateJWT(user.ID)
 }
 
 // ForgotPassword is the resolver for the forgotPassword field.
@@ -129,11 +130,11 @@ func (r *mutationResolver) ResetPassword(ctx context.Context, id string, passwor
 		return nil, err
 	}
 
-	if helper.ComparePassword(user.Password, password) {
+	if helper2.ComparePassword(user.Password, password) {
 		return nil, fmt.Errorf("password cannot be the same")
 	}
 
-	if hashedP, err := helper.EncryptPassword(password); err != nil {
+	if hashedP, err := helper2.EncryptPassword(password); err != nil {
 		return nil, err
 	} else {
 		user.Password = hashedP

@@ -1,16 +1,16 @@
 package mail
 
 import (
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/helper"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils"
 )
 
 const defaultName = "Robber"
 const defaultAddress = "robber.tpaweb@gmail.com"
 const defaultPassword = "-"
 
-var name = helper.GetDotENVVariable("EMAIL_SENDER_NAME", defaultName)
-var address = helper.GetDotENVVariable("EMAIL_SENDER_ADDRESS", defaultAddress)
-var password = helper.GetDotENVVariable("EMAIL_SENDER_PASSWORD", defaultPassword)
+var name = utils.GetDotENVVariable("EMAIL_SENDER_NAME", defaultName)
+var address = utils.GetDotENVVariable("EMAIL_SENDER_ADDRESS", defaultAddress)
+var password = utils.GetDotENVVariable("EMAIL_SENDER_PASSWORD", defaultPassword)
 
 func SendVerification(email string, subject string, content string) (bool, error) {
 

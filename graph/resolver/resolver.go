@@ -2,8 +2,8 @@ package resolver
 
 import (
 	"github.com/redis/go-redis/v9"
-	"github.com/yahkerobertkertasnya/facebook-clone-backend/adapter"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
+	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/adapter"
 	"gorm.io/gorm"
 )
 
