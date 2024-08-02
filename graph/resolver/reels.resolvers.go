@@ -6,6 +6,7 @@ package resolver
 
 import (
 	"context"
+
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 )
@@ -37,6 +38,12 @@ func (r *mutationResolver) LikeReelComment(ctx context.Context, reelCommentID st
 // GetReels is the resolver for the getReels field.
 func (r *queryResolver) GetReels(ctx context.Context) ([]*string, error) {
 	return r.ReelsService.GetReels()
+}
+
+// GetReelsPaginated is the resolver for the getReelsPaginated field.
+func (r *queryResolver) GetReelsPaginated(ctx context.Context, pagination model.Pagination) ([]*model.Reel, error) {
+	userID := ctx.Value("UserID").(string)
+	return r.ReelsService.GetReelsPaginated(userID, pagination)
 }
 
 // GetReel is the resolver for the getReel field.

@@ -1,9 +1,11 @@
 package services
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
-	"time"
 )
 
 type ReelsService struct {
@@ -181,6 +183,29 @@ func (s *ReelsService) GetReels() ([]*string, error) {
 	}
 
 	return reelsID, nil
+}
+
+func (s *ReelsService) GetReelsPaginated(userID string, pagination model.Pagination) ([]*model.Reel, error) {
+	var reels []*model.Reel
+
+	cacheKeys := []string{"reels", userID, strconv.Itoa(pagination.Start), strconv.Itoa(pagination.Limit)}
+
+	err := s.RedisAdapter.GetOrSet(cacheKeys, &reels, func() (interface{}, error) {
+		if err := s.DB.
+			Order("RANDOM()").
+			Limit(pagination.Limit).
+			Preload("User").
+			Find(&reels).Error; err != nil {
+			return nil, err
+		}
+		return reels, nil
+	}, 10*time.Minute)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return reels, nil
 }
 
 func (s *ReelsService) GetReel(userID string, id string) (*model.Reel, error) {

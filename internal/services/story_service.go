@@ -1,9 +1,11 @@
 package services
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
-	"time"
 )
 
 type StoryService struct {
@@ -122,8 +124,9 @@ func (s *StoryService) GetUserWithStories(userID string) ([]*model.User, error) 
 			return nil, err
 		}
 
+		fmt.Println("HAHAHAHAHAHAHA", users)
 		return users, nil
-	}, 10*time.Minute)
+	}, 10*time.Second)
 
 	if err != nil {
 		return nil, err

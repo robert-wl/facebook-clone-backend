@@ -51,6 +51,7 @@ input NewReelComment {
 
 extend type Query {
     getReels: [ID] @auth
+    getReelsPaginated(pagination: Pagination!): [Reel] @auth
     getReel(id: ID!): Reel! @auth
     getReelComments(reelId: ID!): [ReelComment]! @auth
 }

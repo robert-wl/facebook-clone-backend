@@ -258,6 +258,7 @@ type ComplexityRoot struct {
 		GetReel            func(childComplexity int, id string) int
 		GetReelComments    func(childComplexity int, reelID string) int
 		GetReels           func(childComplexity int) int
+		GetReelsPaginated  func(childComplexity int, pagination model.Pagination) int
 		GetStories         func(childComplexity int, username string) int
 		GetUser            func(childComplexity int, username string) int
 		GetUserFriends     func(childComplexity int, username string) int
@@ -429,6 +430,7 @@ type QueryResolver interface {
 	GetFilteredPosts(ctx context.Context, filter string, pagination model.Pagination) ([]*model.Post, error)
 	GetGroupHomePosts(ctx context.Context, pagination model.Pagination) ([]*model.Post, error)
 	GetReels(ctx context.Context) ([]*string, error)
+	GetReelsPaginated(ctx context.Context, pagination model.Pagination) ([]*model.Reel, error)
 	GetReel(ctx context.Context, id string) (*model.Reel, error)
 	GetReelComments(ctx context.Context, reelID string) ([]*model.ReelComment, error)
 	GetStories(ctx context.Context, username string) ([]*model.Story, error)
@@ -1812,6 +1814,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetReels(childComplexity), true
+
+	case "Query.getReelsPaginated":
+		if e.complexity.Query.GetReelsPaginated == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getReelsPaginated_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetReelsPaginated(childComplexity, args["pagination"].(model.Pagination)), true
 
 	case "Query.getStories":
 		if e.complexity.Query.GetStories == nil {
@@ -3395,6 +3409,21 @@ func (ec *executionContext) field_Query_getReel_args(ctx context.Context, rawArg
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getReelsPaginated_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.Pagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg0, err = ec.unmarshalNPagination2githubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pagination"] = arg0
 	return args, nil
 }
 
@@ -14207,6 +14236,102 @@ func (ec *executionContext) fieldContext_Query_getReels(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_getReelsPaginated(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getReelsPaginated(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().GetReelsPaginated(rctx, fc.Args["pagination"].(model.Pagination))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*model.Reel); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model.Reel`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Reel)
+	fc.Result = res
+	return ec.marshalOReel2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReel(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getReelsPaginated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Reel_id(ctx, field)
+			case "user":
+				return ec.fieldContext_Reel_user(ctx, field)
+			case "content":
+				return ec.fieldContext_Reel_content(ctx, field)
+			case "video":
+				return ec.fieldContext_Reel_video(ctx, field)
+			case "likeCount":
+				return ec.fieldContext_Reel_likeCount(ctx, field)
+			case "commentCount":
+				return ec.fieldContext_Reel_commentCount(ctx, field)
+			case "shareCount":
+				return ec.fieldContext_Reel_shareCount(ctx, field)
+			case "likes":
+				return ec.fieldContext_Reel_likes(ctx, field)
+			case "comments":
+				return ec.fieldContext_Reel_comments(ctx, field)
+			case "liked":
+				return ec.fieldContext_Reel_liked(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Reel_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Reel", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getReelsPaginated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_getReel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_getReel(ctx, field)
 	if err != nil {
@@ -21692,6 +21817,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getReelsPaginated":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getReelsPaginated(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "getReel":
 			field := field
 
@@ -24209,6 +24353,47 @@ func (ec *executionContext) marshalOPostVisibility2ᚖgithubᚗcomᚋyahkerobert
 		return graphql.Null
 	}
 	return ec._PostVisibility(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOReel2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReel(ctx context.Context, sel ast.SelectionSet, v []*model.Reel) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOReel2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReel(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) marshalOReel2ᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐReel(ctx context.Context, sel ast.SelectionSet, v *model.Reel) graphql.Marshaler {
