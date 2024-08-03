@@ -135,6 +135,18 @@ func (s *GroupService) CreateGroup(userID string, group model.NewGroup) (*model.
 		s.NotificationService.CreateNewGroupNotification(userID, newGroup.ID)
 	}()
 
+	if err := s.RedisAdapter.Del([]string{"group", "all"}); err != nil {
+		return nil, err
+	}
+
+	if err := s.RedisAdapter.Del([]string{"group", "user", userID}); err != nil {
+		return nil, err
+	}
+
+	if err := s.RedisAdapter.Del([]string{"group", "joined", userID}); err != nil {
+		return nil, err
+	}
+
 	return newGroup, nil
 }
 
@@ -225,6 +237,11 @@ func (s *GroupService) HandleRequest(userID string, groupID string) (*model.Memb
 		return nil, err
 	}
 
+	if err := s.RedisAdapter.Del([]string{"group", "joined", userID}); err != nil {
+		return nil, err
+
+	}
+
 	return member, nil
 }
 
@@ -235,7 +252,7 @@ func (s *GroupService) UpdateGroupBackground(groupID string, background string) 
 		return nil, err
 	}
 
-	if err := s.RedisAdapter.Del([]string{"group", groupID}); err != nil {
+	if err := s.RedisAdapter.Del([]string{"group"}); err != nil {
 		return nil, err
 	}
 
@@ -426,7 +443,7 @@ func (s *GroupService) PromoteMember(groupID string, userID string) (*model.Memb
 func (s *GroupService) GetGroup(userID string, id string) (*model.Group, error) {
 	var group *model.Group
 
-	err := s.RedisAdapter.GetOrSet([]string{"group", id}, &group, func() (interface{}, error) {
+	err := s.RedisAdapter.GetOrSet([]string{"group", "user", id}, &group, func() (interface{}, error) {
 		subQuery := s.DB.
 			Select("user_id").
 			Where("group_id = ?", id).
