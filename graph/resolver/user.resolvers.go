@@ -6,7 +6,6 @@ package resolver
 
 import (
 	"context"
-
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 )
@@ -91,6 +90,11 @@ func (r *queryResolver) GetAuth(ctx context.Context) (*model.User, error) {
 func (r *queryResolver) GetFilteredUsers(ctx context.Context, filter string, pagination model.Pagination) ([]*model.User, error) {
 	userID := ctx.Value("UserID").(string)
 	return r.UserService.GetFilteredUsers(userID, filter, pagination)
+}
+
+// GetRandomUsers is the resolver for the getRandomUsers field.
+func (r *queryResolver) GetRandomUsers(ctx context.Context, amount int) ([]*model.User, error) {
+	return r.UserService.GetRandomUsers(amount)
 }
 
 // FriendCount is the resolver for the friendCount field.

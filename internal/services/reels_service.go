@@ -40,34 +40,6 @@ func (s *ReelsService) CreateReel(userID string, reel model.NewReel) (*model.Ree
 		return nil, err
 	}
 
-	go func() {
-		var userIDs []string
-		var user *model.User
-
-		if err := s.DB.First(&user, "id = ?", userID).Error; err != nil {
-			return
-		}
-
-		subQuery := s.DB.
-			Model(&model.Friend{}).
-			Where("(sender_id = ? OR receiver_id = ? AND accepted = ?)", userID, userID, true).
-			Select("DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", userID)
-
-		subQueryBlocked := s.DB.
-			Model(&model.BlockNotification{}).
-			Where("(sender_id = ?)", userID).
-			Select("DISTINCT receiver_id")
-
-		if err := s.DB.
-			Model(&model.User{}).
-			Where("id IN (?) AND id NOT IN (?) AND id != ?", subQuery, subQueryBlocked, userID).
-			Select("id").
-			Find(&userIDs).Error; err != nil {
-			return
-		}
-
-	}()
-
 	return newReel, nil
 }
 
@@ -97,8 +69,16 @@ func (s *ReelsService) CreateReelComment(userID string, comment model.NewReelCom
 		return nil, err
 	}
 
-	if err := s.RedisAdapter.Del([]string{"reel", *comment.ParentReel}); err != nil {
-		return nil, err
+	if comment.ParentReel != nil {
+		if err := s.RedisAdapter.Del([]string{"reel", *comment.ParentReel}); err != nil {
+			return nil, err
+		}
+	}
+	if comment.ParentComment != nil {
+		if err := s.RedisAdapter.Del([]string{"reel", *comment.ParentComment}); err != nil {
+			return nil, err
+		}
+
 	}
 
 	return newComment, nil
@@ -195,9 +175,25 @@ func (s *ReelsService) GetReelsPaginated(userID string, pagination model.Paginat
 			Order("RANDOM()").
 			Limit(pagination.Limit).
 			Preload("User").
+			Preload("Likes").
+			Preload("Comments").
 			Find(&reels).Error; err != nil {
 			return nil, err
 		}
+
+		for _, reel := range reels {
+			reel.LikeCount = int(s.DB.Model(reel).Association("Likes").Count())
+			reel.CommentCount = int(s.DB.Model(reel).Association("Comments").Count())
+
+			liked := false
+
+			if err := s.DB.First(&model.ReelLike{}, "reel_id = ? AND user_id = ?", reel.ID, userID).Error; err == nil {
+				liked = true
+			}
+
+			reel.Liked = &liked
+		}
+
 		return reels, nil
 	}, 10*time.Minute)
 

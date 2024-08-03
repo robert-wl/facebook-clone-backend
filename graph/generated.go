@@ -255,6 +255,7 @@ type ComplexityRoot struct {
 		GetPeopleMightKnow func(childComplexity int) int
 		GetPost            func(childComplexity int, id string) int
 		GetPosts           func(childComplexity int, pagination model.Pagination) int
+		GetRandomUsers     func(childComplexity int, amount int) int
 		GetReel            func(childComplexity int, id string) int
 		GetReelComments    func(childComplexity int, reelID string) int
 		GetReels           func(childComplexity int) int
@@ -409,6 +410,7 @@ type QueryResolver interface {
 	CheckResetLink(ctx context.Context, id string) (bool, error)
 	GetAuth(ctx context.Context) (*model.User, error)
 	GetFilteredUsers(ctx context.Context, filter string, pagination model.Pagination) ([]*model.User, error)
+	GetRandomUsers(ctx context.Context, amount int) ([]*model.User, error)
 	GetFriends(ctx context.Context) ([]*model.User, error)
 	GetFriendRequests(ctx context.Context) ([]*model.User, error)
 	GetUserFriends(ctx context.Context, username string) ([]*model.User, error)
@@ -1783,6 +1785,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetPosts(childComplexity, args["pagination"].(model.Pagination)), true
+
+	case "Query.getRandomUsers":
+		if e.complexity.Query.GetRandomUsers == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getRandomUsers_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetRandomUsers(childComplexity, args["amount"].(int)), true
 
 	case "Query.getReel":
 		if e.complexity.Query.GetReel == nil {
@@ -3379,6 +3393,21 @@ func (ec *executionContext) field_Query_getPosts_args(ctx context.Context, rawAr
 		}
 	}
 	args["pagination"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getRandomUsers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["amount"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amount"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["amount"] = arg0
 	return args, nil
 }
 
@@ -12219,6 +12248,96 @@ func (ec *executionContext) fieldContext_Query_getFilteredUsers(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getFilteredUsers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getRandomUsers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getRandomUsers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetRandomUsers(rctx, fc.Args["amount"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋyahkerobertkertasnyaᚋfacebookᚑcloneᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getRandomUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "firstName":
+				return ec.fieldContext_User_firstName(ctx, field)
+			case "lastName":
+				return ec.fieldContext_User_lastName(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "dob":
+				return ec.fieldContext_User_dob(ctx, field)
+			case "gender":
+				return ec.fieldContext_User_gender(ctx, field)
+			case "active":
+				return ec.fieldContext_User_active(ctx, field)
+			case "profile":
+				return ec.fieldContext_User_profile(ctx, field)
+			case "background":
+				return ec.fieldContext_User_background(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "posts":
+				return ec.fieldContext_User_posts(ctx, field)
+			case "friendCount":
+				return ec.fieldContext_User_friendCount(ctx, field)
+			case "mutualCount":
+				return ec.fieldContext_User_mutualCount(ctx, field)
+			case "notificationCount":
+				return ec.fieldContext_User_notificationCount(ctx, field)
+			case "friended":
+				return ec.fieldContext_User_friended(ctx, field)
+			case "blocked":
+				return ec.fieldContext_User_blocked(ctx, field)
+			case "theme":
+				return ec.fieldContext_User_theme(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getRandomUsers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -21406,6 +21525,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getFilteredUsers(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getRandomUsers":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getRandomUsers(ctx, field)
 				return res
 			}
 

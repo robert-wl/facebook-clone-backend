@@ -419,3 +419,13 @@ func (s *UserService) Blocked(userID string, obj *model.User) (bool, error) {
 
 	return blocked, nil
 }
+
+func (s *UserService) GetRandomUsers(amount int) ([]*model.User, error) {
+	var users []*model.User
+
+	if err := s.DB.Order("RANDOM()").Limit(amount).Find(&users).Error; err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}

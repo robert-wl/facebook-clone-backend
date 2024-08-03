@@ -79,9 +79,9 @@ func main() {
 		},
 	})
 
-	database.DropDatabase()
-	database.MigrateDatabase()
-	database.FakeData()
+	//database.DropDatabase()
+	//database.MigrateDatabase()
+	//database.FakeData()
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})

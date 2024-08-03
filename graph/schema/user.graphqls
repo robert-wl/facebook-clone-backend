@@ -48,7 +48,7 @@ type Query {
     checkResetLink(id: String!): Boolean!
     getAuth: User! @auth
     getFilteredUsers(filter: String!, pagination: Pagination!): [User] @auth
-    #getInactiveUsers: [InactiveUser]
+    getRandomUsers(amount: Int!): [User]
 }
 
 type Mutation {
