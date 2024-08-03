@@ -484,6 +484,24 @@ func generateReelComment(users []model.User, reels []model.Reel) []model.ReelCom
 
 }
 
+func generateReelLike(users []model.User, reels []model.Reel) {
+	db := GetDBInstance()
+
+	for _, user := range users {
+		for _, reel := range reels {
+			if rand.Intn(10) > 7 {
+				fmt.Println("Generating Reel Like")
+				reelLike := model.ReelLike{
+					UserID: user.ID,
+					ReelID: reel.ID,
+				}
+
+				db.Create(&reelLike)
+			}
+		}
+	}
+}
+
 func generateReelCommentLike(users []model.User, comments []model.ReelComment) {
 	db := GetDBInstance()
 
@@ -524,6 +542,8 @@ func FakeData() {
 	generateStories(users)
 
 	reels := generateReels(users)
+
+	generateReelLike(users, reels)
 
 	reelComments := generateReelComment(users, reels)
 
