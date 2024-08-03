@@ -29,6 +29,7 @@ func generateImage(resolution *[]string) string {
 		"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/post%2F1722238113910-m8xehm01d1-image_5.png?alt=media\u0026token=c3a85375-58f6-4636-b435-a7fc04969b9b",
 		"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/post%2F1722238114728-depr6qvc1z7-image_6.png?alt=media\u0026token=7408b912-d806-4995-b05f-5006745f426e",
 		"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/post%2F1722238115256-9tfeismfm7w-88016860_p0_master1200.jpg?alt=media\u0026token=8256a127-59cc-4caf-8830-a42f94d66c41",
+		"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/story%2F1691605952816-q8j4hn0vz6-93960519_p0_master1200.jpg?alt=media&token=7d849d47-312b-45e8-8da0-c4e4a24ba7aa",
 	}
 
 	resolutions := [][]string{
@@ -99,10 +100,8 @@ func generateReelVideo() string {
 		"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/reels%2F1722507691773-522yu3ucnih-Very%20round%20chicken%20%23Magic%20%23Animal%20%23Chicken%20%23Share.mp4?alt=media&token=299d639d-e558-4619-9760-822fc492ff12",
 		"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/reels%2F1722474455071-4125ptzq4zk-Not%20their%20first%20potato%20sack%20race%20%20%20(via%20dark_emperor16-TT).mp4?alt=media&token=632a14c4-6850-4c08-9ca4-59e1cdde3ff1",
 		"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/reels%2F1722474493550-6d4lo77opmc-Can%20a%20Seed%20Grow%20in%20Your%20Nose.mp4?alt=media&token=849f9b9b-80aa-4a37-a23d-a32e5599f077",
-
 		"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/reels%2F1722507764084-bv7rn34q3lm-i-m-still-astounded-this-is-true-720-ytshorts.savetube.me.mp4?alt=media&token=e7dd5686-e33d-4887-8d76-631debe1cc15",
 		"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/reels%2F1722507758679-o2ov6nn79xm-guess-the-minecraft-block-in-60-seconds-42-720-ytshorts.savetube.me.mp4?alt=media&token=c360bb88-0ba0-479e-bf75-6a23c62a3748",
-		"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/reels%2F1722474478606-1k887ybkxq2-holy%20crap%20this%20is%20scary.mp4?alt=media&token=9fe7976b-9713-4b50-8d84-4ddaa96cbfa5",
 		"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/reels%2F1722507671474-nl5b2vf418o-classicString%20theory%20is%20a%20theoretical%20framework%20in%20physics%20that%20aims%20to%20reconcile%20general%20relativity%20and%20quantum%20mechanics%20%20.%20It%20proposes%20that%20the%20fundamental%20particles%20we%20observe%20are%20not%20point-like%20dots%2C%20but%20rath.mp4?alt=media&token=f7a5275f-30ac-43ac-91c4-5d91da4af568",
 		"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/reels%2F1722507635354-wkujxfn3fxp-Normal%20physiological%20levels%20of%20plasma%20C-peptide%20during%20fasting%20range%20from%200.9%20-%201.8%20ng-ml.%20Higher%20levels%20may%20suggest%20conditions%20such%20as%20insulin%20resistance%2C%20insulinoma%2C%20or%20kidney%20disease.%20On%20the%20other%20hand%2C%20reduced.mp4?alt=media&token=399e791e-a5cd-4da5-8dbd-c724ebda3441",
 		"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/reels%2F1722474471126-vcwg6wmpdf-The%20Tesla%20Cybertruck%20is%20an%20all-electric%2C%20battery-powered%20light-duty%20truck%20unveiled%20by%20Tesla%2C%20Inc.Here's%20a%20comprehensive%20overview%20of%20its%20key%20features%20and%20specifications-Tesla%20Cybertruck%20OverviewDesign%20and%20Structure.mp4?alt=media&token=1072dae4-244a-42b6-b1ee-4202c58064a8",
@@ -122,6 +121,34 @@ func generateReelVideo() string {
 	video := videos[rand.Intn(len(videos))]
 
 	return video
+}
+
+func generateGroupFile() []string {
+	fileData := [][]string{
+		{"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/groups%2F1722690627861-d8ec04qgk4p-shinchan.gif?alt=media&token=4517df33-5dba-4468-ab24-eb7fa53019b0",
+			"shinchan.gif",
+			"image/gif"},
+		{"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/groups%2F1722690571678-3ax7t6ajm6g-github.txt?alt=media&token=ea36ecb9-94e1-435d-a8ac-ef01f7d23553",
+			"github.txt",
+			"text/plain"},
+		{"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/groups%2F1722690762111-ufragftou4h-7%20to%203.mp3?alt=media&token=1c2ae371-9435-49cd-ae1a-c5f48b3af5dd",
+			"7 to 3.mp3",
+			"audio/mpeg"},
+		{"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/groups%2F1722690693839-6xinic1u4v5-generic-table.tsx?alt=media&token=20b0dccf-e532-4a21-b44b-3acdbbf21692",
+			"generic-table.tsx",
+			"text/plain"},
+		{"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/groups%2F1722690784565-tc3aa14kw4o-April%20Showers.mp3?alt=media&token=fd0ec80b-9e89-46ed-82e0-821c84517206",
+			"April Showers.mp3",
+			"audio/mpeg"},
+		{"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/groups%2F1722690354148-umexa9uw8o9-hld.png?alt=media&token=e4434cd0-db98-4143-a63c-0d17c5aa6412",
+			"hld.png",
+			"image/png"},
+		{"https://firebasestorage.googleapis.com/v0/b/tpaweb-da706.appspot.com/o/groups%2F1722690232438-1z2b73zv9ja-hello.txt?alt=media&token=b6fa74be-546b-4d9b-b254-2018437b9b0d",
+			"hello.txt",
+			"text/plain"},
+	}
+
+	return fileData[rand.Intn(len(fileData))]
 }
 
 func generateUser() []model.User {
@@ -519,6 +546,193 @@ func generateReelCommentLike(users []model.User, comments []model.ReelComment) {
 		}
 	}
 }
+
+func generateGroup(users []model.User) map[string][]model.Member {
+	db := GetDBInstance()
+	var groupMemberMap = make(map[string][]model.Member)
+
+	groupNum := rand.Intn(60) + 20
+
+	for i := 0; i < groupNum; i++ {
+		fmt.Println("Generating Group")
+
+		var privacy string
+
+		if rand.Intn(10) > 6 {
+			privacy = "Public"
+		} else {
+			privacy = "Private"
+		}
+
+		group := model.Group{
+			ID:          uuid.NewString(),
+			Name:        faker.Sentence(),
+			About:       faker.Paragraph(),
+			Privacy:     privacy,
+			Background:  generateImage(&[]string{"1920", "1080"}),
+			MemberCount: 0,
+			ChatID:      nil,
+			Chat:        nil,
+			CreatedAt:   time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(2000))),
+		}
+
+		db.Create(&group)
+
+		var groupUsers []model.Member
+		for _, user := range users {
+			if rand.Intn(10) > 8 {
+				fmt.Println("Generating Group User")
+
+				var role string
+
+				if rand.Intn(10) > 8 {
+					role = "Admin"
+				} else {
+					role = "member"
+				}
+
+				requested := false
+				if role == "member" {
+					requested = true
+				}
+
+				groupUser := model.Member{
+					GroupID:   group.ID,
+					UserID:    user.ID,
+					Requested: requested,
+					Approved:  true,
+					Role:      role,
+				}
+
+				groupUsers = append(groupUsers, groupUser)
+
+				db.Create(&groupUser)
+			}
+		}
+
+		if len(groupUsers) == 0 {
+			groupUser := model.Member{
+				GroupID:   group.ID,
+				UserID:    users[rand.Intn(len(users))].ID,
+				Requested: false,
+				Approved:  true,
+				Role:      "Admin",
+			}
+
+			groupUsers = append(groupUsers, groupUser)
+			db.Create(&groupUser)
+		}
+
+		groupMemberMap[group.ID] = groupUsers
+
+		group.MemberCount = len(groupUsers)
+
+		db.Save(&group)
+	}
+
+	return groupMemberMap
+}
+
+func generateGroupConversation(groups map[string][]model.Member) {
+	db := GetDBInstance()
+
+	for _, members := range groups {
+
+		conversation := model.Conversation{
+			ID:      uuid.NewString(),
+			GroupID: &members[0].GroupID,
+		}
+
+		db.Create(&conversation)
+
+		var group model.Group
+
+		if err := db.Where("id = ?", members[0].GroupID).First(&group).Error; err != nil {
+			continue
+		}
+
+		group.ChatID = &conversation.ID
+
+		db.Save(&group)
+
+		for i := 0; i < len(members); i++ {
+			fmt.Println("Generating Group Conversation")
+
+			conversation := model.ConversationUsers{
+				UserID:         members[i].UserID,
+				ConversationID: conversation.ID,
+			}
+
+			db.Create(&conversation)
+		}
+	}
+}
+
+func generateGroupPosts(groups map[string][]model.Member) {
+	db := GetDBInstance()
+
+	for _, members := range groups {
+		for i := 0; i < rand.Intn(20); i++ {
+			fmt.Println("Generating Group Post")
+
+			var files []*string
+			if rand.Intn(10) > 4 {
+				if rand.Intn(10) > 8 {
+					data := generateVideo()
+					files = append(files, &data)
+
+				} else {
+					takeAmount := rand.Intn(10) + 1
+
+					for i := 0; i < takeAmount; i++ {
+						image := generateImage(nil)
+						files = append(files, &image)
+					}
+				}
+			}
+
+			post := model.Post{
+				ID:         uuid.NewString(),
+				UserID:     members[rand.Intn(len(members))].UserID,
+				Content:    faker.Sentence(),
+				Privacy:    "group",
+				ShareCount: rand.Intn(100),
+				CreatedAt:  time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
+				Files:      files,
+				GroupID:    &members[0].GroupID,
+			}
+
+			db.Create(&post)
+		}
+	}
+}
+
+func generateGroupFiles(groups map[string][]model.Member) {
+	db := GetDBInstance()
+
+	for _, members := range groups {
+		for i := 0; i < rand.Intn(200); i++ {
+			if rand.Intn(10) > 8 {
+				fmt.Println("Generating Group File")
+
+				fileData := generateGroupFile()
+
+				url := fmt.Sprintf("{\"url\": \"%s\",\"directory\": \"%s\",\"type\": \"%s\"}", fileData[0], fileData[1], fileData[2])
+				file := model.GroupFile{
+					ID:      uuid.NewString(),
+					UserID:  members[rand.Intn(len(members))].UserID,
+					GroupID: members[0].GroupID,
+					Name:    fileData[1],
+					Type:    fileData[2],
+					URL:     url,
+				}
+
+				db.Create(&file)
+			}
+		}
+	}
+}
+
 func FakeData() {
 	users := generateUser()
 
@@ -548,4 +762,14 @@ func FakeData() {
 	reelComments := generateReelComment(users, reels)
 
 	generateReelCommentLike(users, reelComments)
+
+	groupData := generateGroup(users)
+
+	generateGroupConversation(groupData)
+
+	generateGroupPosts(groupData)
+
+	generateGroupFiles(groupData)
+
+	fmt.Println("Data Generated")
 }
