@@ -6,7 +6,6 @@ package resolver
 
 import (
 	"context"
-
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 )
@@ -104,7 +103,8 @@ func (r *queryResolver) GetGroupInvite(ctx context.Context, id string) ([]*model
 
 // GetGroups is the resolver for the getGroups field.
 func (r *queryResolver) GetGroups(ctx context.Context) ([]*model.Group, error) {
-	return r.GroupService.GetGroups()
+	userID := ctx.Value("UserID").(string)
+	return r.GroupService.GetGroups(userID)
 }
 
 // GetJoinedGroups is the resolver for the getJoinedGroups field.

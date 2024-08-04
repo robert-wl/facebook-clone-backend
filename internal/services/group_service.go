@@ -22,14 +22,35 @@ func NewGroupService(s *Service, ns *NotificationService) *GroupService {
 	}
 }
 
+func (s *GroupService) ClearGroupCache(groupID string, userID string) error {
+	if err := s.RedisAdapter.Del([]string{"group", groupID}); err != nil {
+		return err
+	}
+
+	if err := s.RedisAdapter.Del([]string{"group", "joined", userID}); err != nil {
+		return err
+	}
+
+	if err := s.RedisAdapter.Del([]string{"group", "all", userID}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *GroupService) MemberCount(obj *model.Group) (int, error) {
 	var count int
+
+	fmt.Println("CALLED")
 
 	err := s.RedisAdapter.GetOrSet([]string{"group", obj.ID, "memberCount"}, &count, func() (interface{}, error) {
 		count = int(s.DB.Model(&obj).Association("Members").Count())
 
+		fmt.Println("COUNTER", s.DB.Model(&obj).Association("Members").Count())
 		return count, nil
 	}, 10*time.Minute)
+
+	fmt.Println("COUNT", count)
 
 	if err != nil {
 		return 0, err
@@ -43,9 +64,9 @@ func (s *GroupService) Joined(userID string, obj *model.Group) (string, error) {
 
 	err := s.RedisAdapter.GetOrSet([]string{"group", obj.ID, "joined", userID}, &status, func() (interface{}, error) {
 		if err := s.DB.First(&member, "group_id = ? AND user_id = ?", obj.ID, userID).Error; err == nil && member != nil {
-			if member.Requested && member.Approved {
+			if member.Requested && !member.Approved {
 				status = "pending"
-			} else if member.Approved {
+			} else if member.Approved && !member.Requested {
 				status = "joined"
 			} else {
 				status = "not accepted"
@@ -135,15 +156,7 @@ func (s *GroupService) CreateGroup(userID string, group model.NewGroup) (*model.
 		s.NotificationService.CreateNewGroupNotification(userID, newGroup.ID)
 	}()
 
-	if err := s.RedisAdapter.Del([]string{"group", "all"}); err != nil {
-		return nil, err
-	}
-
-	if err := s.RedisAdapter.Del([]string{"group", "user", userID}); err != nil {
-		return nil, err
-	}
-
-	if err := s.RedisAdapter.Del([]string{"group", "joined", userID}); err != nil {
+	if err := s.ClearGroupCache(newGroup.ID, userID); err != nil {
 		return nil, err
 	}
 
@@ -196,6 +209,10 @@ func (s *GroupService) HandleRequest(userID string, groupID string) (*model.Memb
 			return nil, err
 		}
 
+		if err := s.ClearGroupCache(groupID, userID); err != nil {
+			return nil, err
+		}
+
 		return member, nil
 	}
 
@@ -222,7 +239,7 @@ func (s *GroupService) HandleRequest(userID string, groupID string) (*model.Memb
 			return nil, err
 		}
 
-		if err := s.RedisAdapter.Del([]string{"group", groupID}); err != nil {
+		if err := s.ClearGroupCache(groupID, userID); err != nil {
 			return nil, err
 		}
 
@@ -233,13 +250,8 @@ func (s *GroupService) HandleRequest(userID string, groupID string) (*model.Memb
 		return nil, err
 	}
 
-	if err := s.RedisAdapter.Del([]string{"group", groupID}); err != nil {
+	if err := s.ClearGroupCache(groupID, userID); err != nil {
 		return nil, err
-	}
-
-	if err := s.RedisAdapter.Del([]string{"group", "joined", userID}); err != nil {
-		return nil, err
-
 	}
 
 	return member, nil
@@ -446,7 +458,7 @@ func (s *GroupService) GetGroup(userID string, id string) (*model.Group, error) 
 	err := s.RedisAdapter.GetOrSet([]string{"group", "user", id}, &group, func() (interface{}, error) {
 		subQuery := s.DB.
 			Select("user_id").
-			Where("group_id = ?", id).
+			Where("group_id = ? and approved = true and requested = false", id).
 			Table("members")
 
 		if err := s.DB.
@@ -459,10 +471,21 @@ func (s *GroupService) GetGroup(userID string, id string) (*model.Group, error) 
 			return nil, err
 		}
 
+		var members []*model.Member
+		for _, member := range group.Members {
+			if member.Approved && !member.Requested {
+				members = append(members, member)
+			}
+		}
+
+		group.Members = members
+		group.MemberCount = len(members)
+
 		return group, nil
 
 	}, 10*time.Minute)
 
+	fmt.Println("GROUP D", group)
 	if err != nil {
 		return nil, err
 	}
@@ -513,10 +536,10 @@ func (s *GroupService) GetGroupInvite(userID string, id string) ([]*model.User, 
 	return users, nil
 }
 
-func (s *GroupService) GetGroups() ([]*model.Group, error) {
+func (s *GroupService) GetGroups(userID string) ([]*model.Group, error) {
 	var groups []*model.Group
 
-	err := s.RedisAdapter.GetOrSet([]string{"group", "all"}, &groups, func() (interface{}, error) {
+	err := s.RedisAdapter.GetOrSet([]string{"group", "all", userID}, &groups, func() (interface{}, error) {
 		if err := s.DB.Find(&groups, "privacy = ?", "public").Error; err != nil {
 			return nil, err
 		}
