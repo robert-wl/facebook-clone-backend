@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils"
@@ -155,8 +156,8 @@ func generateUser() []model.User {
 	var users []model.User
 
 	db := GetDBInstance()
+
 	for i := 0; i < 40; i++ {
-		fmt.Println("Generating User")
 
 		pw, _ := utils.EncryptPassword("password")
 
@@ -249,149 +250,195 @@ func generatePost(user model.User) []model.Post {
 func generateFriend(users []model.User) {
 	db := GetDBInstance()
 
+	var wg sync.WaitGroup
 	for i := 0; i < len(users); i++ {
-		for j := i + 1; j < len(users); j++ {
-			fmt.Println("Generating Friend")
-			sender := users[i]
-			receiver := users[j]
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			for j := i + 1; j < len(users); j++ {
+				fmt.Println("Generating Friend")
+				sender := users[i]
+				receiver := users[j]
 
-			friend := model.Friend{
-				SenderID:   sender.ID,
-				ReceiverID: receiver.ID,
-				Accepted:   true,
-			}
-			friend2 := model.Friend{
-				SenderID:   receiver.ID,
-				ReceiverID: sender.ID,
-				Accepted:   true,
-			}
+				friend := model.Friend{
+					SenderID:   sender.ID,
+					ReceiverID: receiver.ID,
+					Accepted:   true,
+				}
+				friend2 := model.Friend{
+					SenderID:   receiver.ID,
+					ReceiverID: sender.ID,
+					Accepted:   true,
+				}
 
-			db.Create(&friend)
-			db.Create(&friend2)
-		}
+				db.Create(&friend)
+				db.Create(&friend2)
+			}
+		}(i)
 	}
+	wg.Wait()
 }
 
 func generatePostLike(users []model.User, posts []model.Post) {
 	db := GetDBInstance()
 
+	var wg sync.WaitGroup
 	for _, user := range users {
-		for _, post := range posts {
-			if rand.Intn(10) > 4 {
-				fmt.Println("Generating Post Like")
-				postLike := model.PostLike{
-					UserID: user.ID,
-					PostID: post.ID,
-				}
+		wg.Add(1)
+		go func(user model.User) {
+			defer wg.Done()
+			for _, post := range posts {
+				if rand.Intn(10) > 4 {
+					fmt.Println("Generating Post Like")
+					postLike := model.PostLike{
+						UserID: user.ID,
+						PostID: post.ID,
+					}
 
-				db.Create(&postLike)
+					db.Create(&postLike)
+				}
 			}
-		}
+		}(user)
 	}
+	wg.Wait()
 }
 
 func generatePostComment(users []model.User, posts []model.Post) []model.Comment {
 	db := GetDBInstance()
 
+	var wg1 sync.WaitGroup
 	var comments []model.Comment
 	for _, user := range users {
-		for _, post := range posts {
-			if rand.Intn(10) > 8 {
-				fmt.Println("Generating Post Comment")
-				postComment := model.Comment{
-					ID:           uuid.NewString(),
-					UserID:       user.ID,
-					Content:      faker.Sentence(),
-					ParentPostID: &post.ID,
-					CreatedAt:    time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
+		wg1.Add(1)
+		go func(user model.User) {
+			defer wg1.Done()
+			for _, post := range posts {
+				if rand.Intn(10) > 8 {
+					fmt.Println("Generating Post Comment")
+					postComment := model.Comment{
+						ID:           uuid.NewString(),
+						UserID:       user.ID,
+						Content:      faker.Sentence(),
+						ParentPostID: &post.ID,
+						CreatedAt:    time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
+					}
+
+					db.Create(&postComment)
+					comments = append(comments, postComment)
 				}
-
-				db.Create(&postComment)
-				comments = append(comments, postComment)
 			}
-		}
+		}(user)
 	}
+	wg1.Wait()
 
+	var wg2 sync.WaitGroup
+	var commentReplies []model.Comment
 	for _, comment := range comments {
-		for _, user := range users {
-			if rand.Intn(10) > 8 {
-				fmt.Println("Generating Comment Reply")
-				commentReply := model.Comment{
-					ID:              uuid.NewString(),
-					UserID:          user.ID,
-					Content:         faker.Sentence(),
-					ParentCommentID: &comment.ID,
-					CreatedAt:       time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
-				}
+		wg2.Add(1)
+		go func(comment model.Comment) {
+			defer wg2.Done()
+			for _, user := range users {
+				if rand.Intn(10) > 8 {
+					fmt.Println("Generating Comment Reply")
+					commentReply := model.Comment{
+						ID:              uuid.NewString(),
+						UserID:          user.ID,
+						Content:         faker.Sentence(),
+						ParentCommentID: &comment.ID,
+						CreatedAt:       time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
+					}
 
-				db.Create(&commentReply)
-				comments = append(comments, commentReply)
+					db.Create(&commentReply)
+					commentReplies = append(commentReplies, commentReply)
+				}
 			}
-		}
+		}(comment)
 	}
 
-	return comments
+	commentReplies = append(commentReplies, comments...)
+	wg2.Wait()
+
+	return commentReplies
 }
 
 func generateCommentLike(users []model.User, comments []model.Comment) {
 	db := GetDBInstance()
 
-	for _, user := range users {
-		for _, comment := range comments {
-			if rand.Intn(10) > 7 {
-				fmt.Println("Generating Comment Like")
-				commentLike := model.CommentLike{
-					UserID:    user.ID,
-					CommentID: comment.ID,
-				}
+	var wg sync.WaitGroup
+	for _, comment := range comments {
+		wg.Add(1)
+		go func(comment model.Comment) {
+			defer wg.Done()
+			for _, user := range users {
+				if rand.Intn(10) > 7 {
+					fmt.Println("Generating Comment Like")
+					commentLike := model.CommentLike{
+						UserID:    user.ID,
+						CommentID: comment.ID,
+					}
 
-				db.Create(&commentLike)
+					if err := db.Create(&commentLike); err != nil {
+						return
+					}
+				}
 			}
-		}
+		}(comment)
 	}
+	wg.Wait()
+
+	fmt.Println("USER COUNT", len(users))
+	fmt.Println("COMMENT COUNT", len(comments))
 
 }
 
 func generateConversation(users []model.User) {
 	db := GetDBInstance()
 
+	var wg sync.WaitGroup
 	randUser := users
 	for i := 0; i < len(users); i++ {
-		rand.Shuffle(len(randUser), func(i, j int) {
-			randUser[i], randUser[j] = randUser[j], randUser[i]
-		})
+		wg.Add(1)
 
-		randLength := rand.Intn(len(users))
+		go func(i int) {
+			defer wg.Done()
+			rand.Shuffle(len(randUser), func(i, j int) {
+				randUser[i], randUser[j] = randUser[j], randUser[i]
+			})
 
-		for j := 0; j < randLength; j++ {
-			if randUser[j].ID == randUser[i].ID {
-				continue
+			randLength := rand.Intn(len(users))
+
+			for j := 0; j < randLength; j++ {
+				if randUser[j].ID == randUser[i].ID {
+					continue
+				}
+
+				fmt.Println("Generating Conversation")
+				sender := randUser[i]
+				receiver := randUser[j]
+
+				conversation := model.Conversation{
+					ID: uuid.NewString(),
+				}
+
+				db.Create(&conversation)
+
+				cUser1 := model.ConversationUsers{
+					ConversationID: conversation.ID,
+					UserID:         sender.ID,
+				}
+
+				cUser2 := model.ConversationUsers{
+					ConversationID: conversation.ID,
+					UserID:         receiver.ID,
+				}
+
+				db.Create(&cUser1)
+				db.Create(&cUser2)
 			}
-
-			fmt.Println("Generating Conversation")
-			sender := randUser[i]
-			receiver := randUser[j]
-
-			conversation := model.Conversation{
-				ID: uuid.NewString(),
-			}
-
-			db.Create(&conversation)
-
-			cUser1 := model.ConversationUsers{
-				ConversationID: conversation.ID,
-				UserID:         sender.ID,
-			}
-
-			cUser2 := model.ConversationUsers{
-				ConversationID: conversation.ID,
-				UserID:         receiver.ID,
-			}
-
-			db.Create(&cUser1)
-			db.Create(&cUser2)
-		}
+		}(i)
 	}
+
+	wg.Wait()
 }
 
 func generateStories(users []model.User) {
@@ -409,60 +456,75 @@ func generateStories(users []model.User) {
 		"roman",
 	}
 
+	var wg sync.WaitGroup
 	for _, user := range users {
-		for i := 0; i < rand.Intn(10); i++ {
-			fmt.Println("Generating Story")
-			textBr := faker.Sentence()
+		wg.Add(1)
 
-			if rand.Intn(10) > 5 {
-				story := model.Story{
-					ID:        uuid.NewString(),
-					UserID:    user.ID,
-					Font:      &fonts[rand.Intn(len(fonts))],
-					Color:     &colors[rand.Intn(len(colors))],
-					Text:      &textBr,
-					CreatedAt: time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(20))),
+		go func(user model.User) {
+			defer wg.Done()
+			for i := 0; i < rand.Intn(10); i++ {
+				fmt.Println("Generating Story")
+				textBr := faker.Sentence()
+
+				if rand.Intn(10) > 5 {
+					story := model.Story{
+						ID:        uuid.NewString(),
+						UserID:    user.ID,
+						Font:      &fonts[rand.Intn(len(fonts))],
+						Color:     &colors[rand.Intn(len(colors))],
+						Text:      &textBr,
+						CreatedAt: time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(20))),
+					}
+
+					db.Create(&story)
+				} else {
+					image := generateImage(nil)
+					story := model.Story{
+						ID:        uuid.NewString(),
+						UserID:    user.ID,
+						Image:     &image,
+						CreatedAt: time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(20))),
+					}
+
+					db.Create(&story)
 				}
-
-				db.Create(&story)
-			} else {
-				image := generateImage(nil)
-				story := model.Story{
-					ID:        uuid.NewString(),
-					UserID:    user.ID,
-					Image:     &image,
-					CreatedAt: time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(20))),
-				}
-
-				db.Create(&story)
 			}
-		}
+		}(user)
 	}
+
+	wg.Wait()
 }
 
 func generateReels(users []model.User) []model.Reel {
 	db := GetDBInstance()
 
-	reels := []model.Reel{}
+	var wg sync.WaitGroup
+	var reels []model.Reel
 	for _, user := range users {
-		for i := 0; i < rand.Intn(10); i++ {
-			fmt.Println("Generating Reel")
-			video := generateReelVideo()
+		wg.Add(1)
 
-			reel := model.Reel{
-				ID:         uuid.NewString(),
-				UserID:     user.ID,
-				Content:    faker.Sentence(),
-				Video:      video,
-				ShareCount: rand.Intn(100),
-				CreatedAt:  time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(2000))),
+		go func(user model.User) {
+			defer wg.Done()
+			for i := 0; i < rand.Intn(10); i++ {
+				fmt.Println("Generating Reel")
+				video := generateReelVideo()
+
+				reel := model.Reel{
+					ID:         uuid.NewString(),
+					UserID:     user.ID,
+					Content:    faker.Sentence(),
+					Video:      video,
+					ShareCount: rand.Intn(100),
+					CreatedAt:  time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(2000))),
+				}
+
+				db.Create(&reel)
+
+				reels = append(reels, reel)
 			}
-
-			db.Create(&reel)
-
-			reels = append(reels, reel)
-		}
+		}(user)
 	}
+	wg.Wait()
 
 	return reels
 }
@@ -470,42 +532,59 @@ func generateReels(users []model.User) []model.Reel {
 func generateReelComment(users []model.User, reels []model.Reel) []model.ReelComment {
 	db := GetDBInstance()
 
+	var wg1 sync.WaitGroup
 	comments := []model.ReelComment{}
 	for _, user := range users {
-		for _, reel := range reels {
-			if rand.Intn(10) > 8 {
-				fmt.Println("Generating Reel Comment")
-				comment := model.ReelComment{
-					ID:           uuid.NewString(),
-					UserID:       user.ID,
-					Content:      faker.Sentence(),
-					ParentReelID: &reel.ID,
-					CreatedAt:    time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(2000))),
-				}
+		wg1.Add(1)
 
-				db.Create(&comment)
-				comments = append(comments, comment)
+		go func(user model.User) {
+			defer wg1.Done()
+
+			for _, reel := range reels {
+				if rand.Intn(10) > 8 {
+					fmt.Println("Generating Reel Comment")
+					comment := model.ReelComment{
+						ID:           uuid.NewString(),
+						UserID:       user.ID,
+						Content:      faker.Sentence(),
+						ParentReelID: &reel.ID,
+						CreatedAt:    time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(2000))),
+					}
+
+					db.Create(&comment)
+					comments = append(comments, comment)
+				}
 			}
-		}
+		}(user)
 	}
 
+	wg1.Wait()
+
+	var wg2 sync.WaitGroup
 	for _, comment := range comments {
-		for _, user := range users {
-			if rand.Intn(10) > 8 {
-				fmt.Println("Generating Reel Comment Reply")
-				commentReply := model.ReelComment{
-					ID:              uuid.NewString(),
-					UserID:          user.ID,
-					Content:         faker.Sentence(),
-					ParentCommentID: &comment.ID,
-					CreatedAt:       time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(2000))),
-				}
+		wg2.Add(1)
 
-				db.Create(&commentReply)
-				comments = append(comments, commentReply)
+		go func(comment model.ReelComment) {
+			defer wg2.Done()
+			for _, user := range users {
+				if rand.Intn(10) > 8 {
+					fmt.Println("Generating Reel Comment Reply")
+					commentReply := model.ReelComment{
+						ID:              uuid.NewString(),
+						UserID:          user.ID,
+						Content:         faker.Sentence(),
+						ParentCommentID: &comment.ID,
+						CreatedAt:       time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(2000))),
+					}
+
+					db.Create(&commentReply)
+					comments = append(comments, commentReply)
+				}
 			}
-		}
+		}(comment)
 	}
+
+	wg2.Wait()
 
 	return comments
 
@@ -514,101 +593,122 @@ func generateReelComment(users []model.User, reels []model.Reel) []model.ReelCom
 func generateReelLike(users []model.User, reels []model.Reel) {
 	db := GetDBInstance()
 
+	var wg sync.WaitGroup
 	for _, user := range users {
-		for _, reel := range reels {
-			if rand.Intn(10) > 7 {
-				fmt.Println("Generating Reel Like")
-				reelLike := model.ReelLike{
-					UserID: user.ID,
-					ReelID: reel.ID,
-				}
+		wg.Add(1)
 
-				db.Create(&reelLike)
+		go func(user model.User) {
+			defer wg.Done()
+			for _, reel := range reels {
+				if rand.Intn(10) > 7 {
+					fmt.Println("Generating Reel Like")
+					reelLike := model.ReelLike{
+						UserID: user.ID,
+						ReelID: reel.ID,
+					}
+
+					db.Create(&reelLike)
+				}
 			}
-		}
+		}(user)
 	}
+	wg.Wait()
 }
 
 func generateReelCommentLike(users []model.User, comments []model.ReelComment) {
 	db := GetDBInstance()
 
+	var wg sync.WaitGroup
 	for _, user := range users {
-		for _, comment := range comments {
-			if rand.Intn(10) > 7 {
-				fmt.Println("Generating Reel Comment Like")
-				commentLike := model.ReelCommentLike{
-					ReelCommentID: comment.ID,
-					UserID:        user.ID,
-				}
+		wg.Add(1)
 
-				db.Create(&commentLike)
+		go func(user model.User) {
+			defer wg.Done()
+			for _, comment := range comments {
+				if rand.Intn(10) > 7 {
+					fmt.Println("Generating Reel Comment Like")
+					commentLike := model.ReelCommentLike{
+						ReelCommentID: comment.ID,
+						UserID:        user.ID,
+					}
+
+					db.Create(&commentLike)
+				}
 			}
-		}
+		}(user)
 	}
+	wg.Wait()
 }
 
 func generateGroup(users []model.User) map[string][]model.Member {
 	db := GetDBInstance()
 	var groupMemberMap = make(map[string][]model.Member)
 
-	groupNum := rand.Intn(60) + 20
+	groupNum := rand.Intn(100) + 50
 
+	var wg sync.WaitGroup
 	for i := 0; i < groupNum; i++ {
 		fmt.Println("Generating Group")
 
 		var privacy string
 
 		if rand.Intn(10) > 6 {
-			privacy = "Public"
+			privacy = "public"
 		} else {
-			privacy = "Private"
+			privacy = "private"
 		}
 
 		group := model.Group{
 			ID:          uuid.NewString(),
-			Name:        faker.Sentence(),
+			Name:        fmt.Sprintf("%s %s ", faker.Word(), faker.Word()),
 			About:       faker.Paragraph(),
 			Privacy:     privacy,
 			Background:  generateImage(&[]string{"1920", "1080"}),
 			MemberCount: 0,
 			ChatID:      nil,
-			Chat:        nil,
 			CreatedAt:   time.Now().Add(-time.Hour * time.Duration(1+rand.Intn(2000))),
 		}
 
 		db.Create(&group)
 
 		var groupUsers []model.Member
-		for _, user := range users {
-			if rand.Intn(10) > 8 {
-				fmt.Println("Generating Group User")
+		wg.Add(1)
 
-				var role string
-
+		go func(group model.Group) {
+			defer wg.Done()
+			for _, user := range users {
 				if rand.Intn(10) > 8 {
-					role = "Admin"
-				} else {
-					role = "member"
+					fmt.Println("Generating Group User")
+
+					var role string
+
+					if rand.Intn(10) > 8 {
+						role = "admin"
+					} else {
+						role = "member"
+					}
+
+					approved := true
+					if role == "member" && rand.Intn(10) > 8 {
+						approved = false
+					}
+
+					groupUser := model.Member{
+						GroupID:   group.ID,
+						UserID:    user.ID,
+						Requested: false,
+						Approved:  approved,
+						Role:      role,
+					}
+
+					groupUsers = append(groupUsers, groupUser)
+
+					db.Create(&groupUser)
 				}
-
-				requested := false
-				if role == "member" {
-					requested = true
-				}
-
-				groupUser := model.Member{
-					GroupID:   group.ID,
-					UserID:    user.ID,
-					Requested: requested,
-					Approved:  true,
-					Role:      role,
-				}
-
-				groupUsers = append(groupUsers, groupUser)
-
-				db.Create(&groupUser)
 			}
-		}
+		}(group)
+
+		wg.Wait()
 
 		if len(groupUsers) == 0 {
 			groupUser := model.Member{
@@ -616,7 +716,7 @@ func generateGroup(users []model.User) map[string][]model.Member {
 				UserID:    users[rand.Intn(len(users))].ID,
 				Requested: false,
 				Approved:  true,
-				Role:      "Admin",
+				Role:      "admin",
 			}
 
 			groupUsers = append(groupUsers, groupUser)
