@@ -82,6 +82,7 @@ func main() {
 	//database.DropDatabase()
 	//database.MigrateDatabase()
 	//database.FakeData()
+	//adapter.NewRedisCacheAdapter().DelAll()
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})

@@ -109,10 +109,8 @@ func (r *RedisAdapter) Get(keys []string, dest interface{}) error {
 		key = key[1:]
 	}
 
-	fmt.Println("KEY TO SEARCH", key)
 	keys, err := r.scanKeys(key, 0)
 
-	fmt.Println("KEY FOUND", keys)
 	if err != nil {
 		return err
 	}
@@ -126,10 +124,7 @@ func (r *RedisAdapter) Get(keys []string, dest interface{}) error {
 		return err
 	}
 
-	fmt.Println("KEYS", keys[0], val)
-
 	if err := json.Unmarshal([]byte(val), dest); err != nil {
-		fmt.Println("ERROR", err)
 		return err
 	}
 
@@ -170,24 +165,19 @@ func (r *RedisAdapter) Gets(keys []string, dest []interface{}) error {
 
 func (r *RedisAdapter) GetOrSet(keys []string, dest interface{}, callback func() (interface{}, error), duration time.Duration) error {
 	if errG := r.Get(keys, dest); errG == nil && dest != nil {
-		fmt.Println("GETTING KEYS", keys, dest)
 		return nil
 	}
 
-	fmt.Println("QUERYING KEYS", keys, dest)
 	value, err := callback()
 
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("SETTING KEYS", keys)
 	if err := r.Set(value, keys, duration); err != nil {
-		fmt.Println("SET ERROR", err)
 		return err
 	}
 
-	fmt.Println("GETTING KEYS", keys, dest)
 	if err := r.Get(keys, dest); err != nil && dest != nil {
 		return err
 	}
@@ -283,6 +273,26 @@ func (r *RedisAdapter) Del(keys []string) error {
 		}
 
 	}()
+
+	return nil
+}
+
+func (r *RedisAdapter) DelAll() error {
+	keys, err := r.scanKeys("*", 0)
+
+	if err != nil {
+		return err
+	}
+
+	if len(keys) == 0 {
+		return nil
+	}
+
+	for _, key := range keys {
+		if err := r.client.Del(ctx, key).Err(); err != nil {
+			continue
+		}
+	}
 
 	return nil
 }
