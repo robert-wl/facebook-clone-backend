@@ -86,7 +86,7 @@ func (s *GroupService) Joined(userID string, obj *model.Group) (string, error) {
 func (s *GroupService) IsAdmin(userID string, obj *model.Group) (bool, error) {
 	var isAdmin = false
 	err := s.RedisAdapter.GetOrSet([]string{"group", obj.ID, "isAdmin", userID}, &isAdmin, func() (interface{}, error) {
-		if err := s.DB.First(&model.Member{}, "group_id = ? AND user_id = ? and role = ?", obj.ID, userID, "Admin").Error; err != nil {
+		if err := s.DB.First(&model.Member{}, "group_id = ? AND user_id = ? and role = ?", obj.ID, userID, "admin").Error; err != nil {
 			return false, nil
 		}
 

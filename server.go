@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
+	"log"
+	"net/http"
+
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/directives"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/adapter"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/auth"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/database"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/services"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils"
-	"log"
-	"net/http"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -79,10 +80,10 @@ func main() {
 		},
 	})
 
-	//database.DropDatabase()
-	//database.MigrateDatabase()
-	//database.FakeData()
-	//adapter.NewRedisCacheAdapter().DelAll()
+	database.DropDatabase()
+	database.MigrateDatabase()
+	database.FakeData()
+	adapter.NewRedisCacheAdapter().DelAll()
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})

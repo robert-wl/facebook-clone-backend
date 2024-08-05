@@ -208,23 +208,37 @@ func generateFriend(users []model.User) {
 		go func(i int) {
 			defer wg.Done()
 			for j := i + 1; j < len(users); j++ {
+				if rand.Intn(10) > 7 {
+					continue
+				}
+
 				fmt.Println("Generating Friend")
 				sender := users[i]
 				receiver := users[j]
 
-				friend := model.Friend{
-					SenderID:   sender.ID,
-					ReceiverID: receiver.ID,
-					Accepted:   true,
-				}
-				friend2 := model.Friend{
-					SenderID:   receiver.ID,
-					ReceiverID: sender.ID,
-					Accepted:   true,
+				if rand.Intn(10) > 3 {
+					friend := model.Friend{
+						SenderID:   sender.ID,
+						ReceiverID: receiver.ID,
+						Accepted:   true,
+					}
+					friend2 := model.Friend{
+						SenderID:   receiver.ID,
+						ReceiverID: sender.ID,
+						Accepted:   true,
+					}
+
+					db.Create(&friend)
+					db.Create(&friend2)
+				} else {
+					friend := model.Friend{
+						SenderID:   sender.ID,
+						ReceiverID: receiver.ID,
+						Accepted:   false,
+					}
+					db.Create(&friend)
 				}
 
-				db.Create(&friend)
-				db.Create(&friend2)
 			}
 		}(i)
 	}
@@ -629,12 +643,12 @@ func generateGroup(users []model.User) map[string][]model.Member {
 		go func(group model.Group) {
 			defer wg.Done()
 			for _, user := range users {
-				if rand.Intn(10) > 8 {
+				if rand.Intn(10) > 5 {
 					fmt.Println("Generating Group User")
 
 					var role string
 
-					if rand.Intn(10) > 8 {
+					if rand.Intn(10) > 5 {
 						role = "admin"
 					} else {
 						role = "member"
@@ -720,11 +734,16 @@ func generateGroupConversation(groups map[string][]model.Member) {
 	}
 }
 
-func generateGroupPosts(groups map[string][]model.Member) {
+func generateGroupPosts(groups map[string][]model.Member) map[string][]model.Post {
 	db := GetDBInstance()
 
+	var groupPosts = make(map[string][]model.Post)
 	for _, members := range groups {
-		for i := 0; i < rand.Intn(20); i++ {
+		generateAmount := rand.Intn(100) + 10
+
+		var posts []model.Post
+
+		for i := 0; i < generateAmount; i++ {
 			fmt.Println("Generating Group Post")
 
 			var files []*string
@@ -756,31 +775,84 @@ func generateGroupPosts(groups map[string][]model.Member) {
 				GroupID:    &members[0].GroupID,
 			}
 
+			posts = append(posts, post)
+
 			db.Create(&post)
 		}
+
+		groupPosts[members[0].GroupID] = posts
 	}
+
+	return groupPosts
 }
 
 func generateGroupFiles(groups map[string][]model.Member) {
 	db := GetDBInstance()
 
 	for _, members := range groups {
-		for i := 0; i < rand.Intn(200); i++ {
-			if rand.Intn(10) > 8 {
-				fmt.Println("Generating Group File")
+		for i := 0; i < rand.Intn(50); i++ {
+			fmt.Println("Generating Group File")
 
-				fileData := generateGroupFile()
+			fileData := generateGroupFile()
 
-				file := model.GroupFile{
-					ID:      uuid.NewString(),
-					UserID:  members[rand.Intn(len(members))].UserID,
-					GroupID: members[0].GroupID,
-					Name:    fileData.Directory,
-					Type:    fileData.Type,
-					URL:     fileData.Url,
+			file := model.GroupFile{
+				ID:         uuid.NewString(),
+				UserID:     members[rand.Intn(len(members))].UserID,
+				GroupID:    members[0].GroupID,
+				Name:       fileData.Directory,
+				Type:       fileData.Type,
+				URL:        fileData.Url,
+				UploadedAt: time.Now().Add(-time.Hour * time.Duration(900+rand.Intn(1000))),
+			}
+
+			db.Create(&file)
+		}
+	}
+}
+
+func generateGroupPostComment(members map[string][]model.Member, posts map[string][]model.Post) []model.Comment {
+	db := GetDBInstance()
+
+	var comments []model.Comment
+
+	for groupID, posts := range posts {
+		for _, user := range members[groupID] {
+			for _, post := range posts {
+				if rand.Intn(10) > 8 {
+					fmt.Println("Generating Group Post Comment")
+					comment := model.Comment{
+						ID:           uuid.NewString(),
+						UserID:       user.UserID,
+						Content:      faker.Sentence(),
+						ParentPostID: &post.ID,
+						CreatedAt:    time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
+					}
+
+					db.Create(&comment)
+					comments = append(comments, comment)
 				}
+			}
+		}
+	}
 
-				db.Create(&file)
+	return comments
+}
+
+func generateGroupPostLike(members map[string][]model.Member, posts map[string][]model.Post) {
+	db := GetDBInstance()
+
+	for groupID, posts := range posts {
+		for _, user := range members[groupID] {
+			for _, post := range posts {
+				if rand.Intn(10) > 4 {
+					fmt.Println("Generating Group Post Like")
+					postLike := model.PostLike{
+						UserID: user.UserID,
+						PostID: post.ID,
+					}
+
+					db.Create(&postLike)
+				}
 			}
 		}
 	}
@@ -821,9 +893,13 @@ func FakeData() {
 
 	generateGroupConversation(groupData)
 
-	generateGroupPosts(groupData)
+	groupPosts := generateGroupPosts(groupData)
 
 	generateGroupFiles(groupData)
+
+	generateGroupPostComment(groupData, groupPosts)
+
+	generateGroupPostLike(groupData, groupPosts)
 
 	fmt.Println("Data Generated")
 }
