@@ -275,9 +275,25 @@ func (s *PostService) Likecomment(userID string, commentID string) (*model.Comme
 	return commentLike, nil
 }
 
-func (s *PostService) DeletePost(postID string) (*string, error) {
+func (s *PostService) DeletePost(postID string, userID string) (*string, error) {
+	var post *model.Post
+
+	if err := s.DB.First(&post, "id = ?", postID).Error; err != nil {
+		return nil, err
+	}
+
 	if err := s.DB.Delete(&model.Post{}, "id = ?", postID).Error; err != nil {
 		return nil, err
+	}
+
+	if err := s.RedisAdapter.Del([]string{"posts", postID}); err != nil {
+		return nil, err
+	}
+
+	if post.GroupID != nil {
+		if err := s.RedisAdapter.Del([]string{"group", *post.GroupID, "user", userID}); err != nil {
+			return nil, err
+		}
 	}
 
 	return &postID, nil
@@ -509,10 +525,15 @@ func (s *PostService) GetGroupHomePosts(userID string, pagination model.Paginati
 	cacheKey := []string{"post", "group", userID, strconv.Itoa(pagination.Start), strconv.Itoa(pagination.Limit)}
 
 	err := s.RedisAdapter.GetOrSet(cacheKey, &posts, func() (interface{}, error) {
-		subQueryGroup := s.DB.
+		subQueryGroupMembers := s.DB.
 			Select("group_id").
 			Where("user_id = ? AND approved = ?", userID, true).
 			Table("members")
+
+		subQueryGroup := s.DB.
+			Select("group_id").
+			Where("privacy = 'public'").
+			Table("groups")
 
 		if err := s.DB.
 			Order("created_at desc").
@@ -524,7 +545,7 @@ func (s *PostService) GetGroupHomePosts(userID string, pagination model.Paginati
 			Preload("PostTags.User").
 			Offset(pagination.Start).
 			Limit(pagination.Limit).
-			Find(&posts, "group_id IN (?)", subQueryGroup).Error; err != nil {
+			Find(&posts, "group_id IN (?) OR group_id IN (?)", subQueryGroupMembers, subQueryGroup).Error; err != nil {
 			return nil, err
 		}
 

@@ -64,7 +64,8 @@ func (r *mutationResolver) Likecomment(ctx context.Context, commentID string) (*
 
 // DeletePost is the resolver for the deletePost field.
 func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*string, error) {
-	return r.PostService.DeletePost(postID)
+	userID := ctx.Value("UserID").(string)
+	return r.PostService.DeletePost(postID, userID)
 }
 
 // LikeCount is the resolver for the likeCount field.
