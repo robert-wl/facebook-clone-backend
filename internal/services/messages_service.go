@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/adapter"
@@ -105,6 +106,19 @@ func (s *MessagesService) SendMessage(userID string, conversationID string, mess
 		return nil, err
 	}
 
+	var lastMessage string
+	if image != nil {
+		lastMessage = "Sent and image"
+	} else {
+		lastMessage = *message
+	}
+
+	if err := s.DB.Find(&model.Conversation{}, "id = ?", conversationID).
+		Update("LastSentMessageTime", time.Now()).
+		Update("LastMessage", lastMessage).Error; err != nil {
+		return nil, err
+	}
+
 	go func() {
 		for _, convChannel := range s.MessageAdapter.ConversationChannels {
 			if convChannel.ConversationID == conversationID {
@@ -134,14 +148,15 @@ func (s *MessagesService) SendMessage(userID string, conversationID string, mess
 func (s *MessagesService) GetConversations(userID string) ([]*model.Conversation, error) {
 	var conversations []*model.Conversation
 	var conversationUsers []*string
-	var groupIDs []*string
+	//var groupIDs []*string
 
 	cacheKey := []string{"conversations", userID}
 
 	err := s.RedisAdapter.GetOrSet(cacheKey, &conversations, func() (interface{}, error) {
-		if err := s.DB.Model(&model.Member{}).Where("user_id = ? AND approved = ?", userID, true).Select("group_id").Find(&groupIDs).Error; err != nil {
-			return nil, err
-		}
+		groupSubquery := s.DB.
+			Model(&model.Member{}).
+			Where("user_id = ? AND approved = ? AND group_id IS NOT NULL", userID, true).
+			Select("group_id")
 
 		if err := s.DB.Model(&model.ConversationUsers{}).Where("user_id = ?", userID).Select("conversation_id").Find(&conversationUsers).Error; err != nil {
 			return nil, err
@@ -151,7 +166,7 @@ func (s *MessagesService) GetConversations(userID string) ([]*model.Conversation
 			Preload("Users").
 			Preload("Users.User").
 			Preload("Messages").
-			Find(&conversations, "id in (?) OR group_id IN (?)", conversationUsers, groupIDs).Error; err != nil {
+			Find(&conversations, "id in (?) OR group_id IN (?)", conversationUsers, groupSubquery).Error; err != nil {
 			return nil, err
 		}
 
@@ -159,28 +174,34 @@ func (s *MessagesService) GetConversations(userID string) ([]*model.Conversation
 			return conversations, nil
 		}
 
-		var groupIds []string
-		for _, conversation := range conversations {
-			if conversation.GroupID == nil {
-				continue
-			}
-			groupIds = append(groupIds, *conversation.GroupID)
-		}
-
 		var groups []*model.Group
 
-		if err := s.DB.Find(&groups, "id IN (?)", groupIDs).Error; err != nil {
+		if err := s.DB.Find(&groups, "id IN (?)", groupSubquery).Error; err != nil {
 			return nil, err
 		}
 
+		fmt.Println(len(groups))
+		var groupMap = make(map[string]*model.Group)
 		for _, group := range groups {
-			for _, conversation := range conversations {
-				if conversation.GroupID == &group.ID {
-					conversation.Group = group
+			groupMap[group.ID] = group
+		}
+
+		for _, conversation := range conversations {
+			if conversation.GroupID != nil {
+				currGroup := groupMap[*conversation.GroupID]
+				conversation.Group = &model.Group{
+					ID:         currGroup.ID,
+					Background: currGroup.Background,
+					Name:       currGroup.Name,
 				}
+				//conversation.Group = groupMap[*conversation.GroupID]
+				fmt.Println("INI SIINYA")
+				fmt.Println(groupMap[*conversation.GroupID])
+				fmt.Println("-=-=-=-=-=-=-=-=-=-=-=-=-=-")
 			}
 		}
 
+		//fmt.Println(conversations)
 		return conversations, nil
 	}, 10*time.Minute)
 

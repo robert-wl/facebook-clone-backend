@@ -5,6 +5,8 @@ type Conversation {
     users: [ConversationUsers!]!
     group: Group
     messages: [Message]
+    lastMessage: String
+    lastSentMessageTime: Time!
 }
 
 type Message {

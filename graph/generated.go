@@ -82,10 +82,12 @@ type ComplexityRoot struct {
 	}
 
 	Conversation struct {
-		Group    func(childComplexity int) int
-		ID       func(childComplexity int) int
-		Messages func(childComplexity int) int
-		Users    func(childComplexity int) int
+		Group               func(childComplexity int) int
+		ID                  func(childComplexity int) int
+		LastMessage         func(childComplexity int) int
+		LastSentMessageTime func(childComplexity int) int
+		Messages            func(childComplexity int) int
+		Users               func(childComplexity int) int
 	}
 
 	ConversationUsers struct {
@@ -596,6 +598,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Conversation.ID(childComplexity), true
+
+	case "Conversation.lastMessage":
+		if e.complexity.Conversation.LastMessage == nil {
+			break
+		}
+
+		return e.complexity.Conversation.LastMessage(childComplexity), true
+
+	case "Conversation.lastSentMessageTime":
+		if e.complexity.Conversation.LastSentMessageTime == nil {
+			break
+		}
+
+		return e.complexity.Conversation.LastSentMessageTime(childComplexity), true
 
 	case "Conversation.messages":
 		if e.complexity.Conversation.Messages == nil {
@@ -4666,6 +4682,91 @@ func (ec *executionContext) fieldContext_Conversation_messages(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Conversation_lastMessage(ctx context.Context, field graphql.CollectedField, obj *model.Conversation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Conversation_lastMessage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastMessage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Conversation_lastMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Conversation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Conversation_lastSentMessageTime(ctx context.Context, field graphql.CollectedField, obj *model.Conversation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Conversation_lastSentMessageTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastSentMessageTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Conversation_lastSentMessageTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Conversation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ConversationUsers_conversationId(ctx context.Context, field graphql.CollectedField, obj *model.ConversationUsers) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ConversationUsers_conversationId(ctx, field)
 	if err != nil {
@@ -5452,6 +5553,10 @@ func (ec *executionContext) fieldContext_Group_chat(_ context.Context, field gra
 				return ec.fieldContext_Conversation_group(ctx, field)
 			case "messages":
 				return ec.fieldContext_Conversation_messages(ctx, field)
+			case "lastMessage":
+				return ec.fieldContext_Conversation_lastMessage(ctx, field)
+			case "lastSentMessageTime":
+				return ec.fieldContext_Conversation_lastSentMessageTime(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Conversation", field.Name)
 		},
@@ -8702,6 +8807,10 @@ func (ec *executionContext) fieldContext_Mutation_createConversation(ctx context
 				return ec.fieldContext_Conversation_group(ctx, field)
 			case "messages":
 				return ec.fieldContext_Conversation_messages(ctx, field)
+			case "lastMessage":
+				return ec.fieldContext_Conversation_lastMessage(ctx, field)
+			case "lastSentMessageTime":
+				return ec.fieldContext_Conversation_lastSentMessageTime(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Conversation", field.Name)
 		},
@@ -13585,6 +13694,10 @@ func (ec *executionContext) fieldContext_Query_getConversations(_ context.Contex
 				return ec.fieldContext_Conversation_group(ctx, field)
 			case "messages":
 				return ec.fieldContext_Conversation_messages(ctx, field)
+			case "lastMessage":
+				return ec.fieldContext_Conversation_lastMessage(ctx, field)
+			case "lastSentMessageTime":
+				return ec.fieldContext_Conversation_lastSentMessageTime(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Conversation", field.Name)
 		},
@@ -20206,6 +20319,13 @@ func (ec *executionContext) _Conversation(ctx context.Context, sel ast.Selection
 			out.Values[i] = ec._Conversation_group(ctx, field, obj)
 		case "messages":
 			out.Values[i] = ec._Conversation_messages(ctx, field, obj)
+		case "lastMessage":
+			out.Values[i] = ec._Conversation_lastMessage(ctx, field, obj)
+		case "lastSentMessageTime":
+			out.Values[i] = ec._Conversation_lastSentMessageTime(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
