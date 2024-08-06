@@ -378,12 +378,17 @@ func generateConversation(users []model.User) {
 					continue
 				}
 
+				if err := db.Find(&model.ConversationUsers{}, "user_id = ? AND user_id = ?", randUser[i].ID, randUser[j].ID).Error; err == nil {
+					continue
+				}
+
 				fmt.Println("Generating Conversation")
 				sender := randUser[i]
 				receiver := randUser[j]
 
 				conversation := model.Conversation{
-					ID: uuid.NewString(),
+					ID:                  uuid.NewString(),
+					LastSentMessageTime: time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
 				}
 
 				db.Create(&conversation)
@@ -702,11 +707,12 @@ func generateGroup(users []model.User) map[string][]model.Member {
 func generateGroupConversation(groups map[string][]model.Member) {
 	db := GetDBInstance()
 
-	for _, members := range groups {
+	for groupID, members := range groups {
 
 		conversation := model.Conversation{
-			ID:      uuid.NewString(),
-			GroupID: &members[0].GroupID,
+			ID:                  uuid.NewString(),
+			GroupID:             &groupID,
+			LastSentMessageTime: time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
 		}
 
 		db.Create(&conversation)
