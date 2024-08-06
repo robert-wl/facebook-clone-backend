@@ -276,7 +276,6 @@ func (s *NotificationService) CreateCommentNotification(userID string, user mode
 				GroupID: nil,
 			}
 
-			fmt.Println(newNotification)
 			if _, err := s.CreateNotification(userID, *newNotification); err != nil {
 				fmt.Println(err)
 				continue

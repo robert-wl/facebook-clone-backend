@@ -57,7 +57,7 @@ func readJSON(name ...string) []JSONFile {
 		err = json.Unmarshal(data, &jsonFiles)
 
 		if err != nil {
-			fmt.Println("Error", n)
+			fmt.Println("Error when unmarshalling", n)
 			panic(err)
 		}
 

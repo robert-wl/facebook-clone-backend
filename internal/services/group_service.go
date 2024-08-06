@@ -41,16 +41,10 @@ func (s *GroupService) ClearGroupCache(groupID string, userID string) error {
 func (s *GroupService) MemberCount(obj *model.Group) (int, error) {
 	var count int
 
-	fmt.Println("CALLED")
-
 	err := s.RedisAdapter.GetOrSet([]string{"group", obj.ID, "memberCount"}, &count, func() (interface{}, error) {
 		count = int(s.DB.Model(&obj).Association("Members").Count())
-
-		fmt.Println("COUNTER", s.DB.Model(&obj).Association("Members").Count())
 		return count, nil
 	}, 10*time.Minute)
-
-	fmt.Println("COUNT", count)
 
 	if err != nil {
 		return 0, err
@@ -455,7 +449,7 @@ func (s *GroupService) PromoteMember(groupID string, userID string) (*model.Memb
 func (s *GroupService) GetGroup(userID string, id string) (*model.Group, error) {
 	var group *model.Group
 
-	err := s.RedisAdapter.GetOrSet([]string{"group", "user", id}, &group, func() (interface{}, error) {
+	err := s.RedisAdapter.GetOrSet([]string{"group", id, "user", userID}, &group, func() (interface{}, error) {
 		subQuery := s.DB.
 			Select("user_id").
 			Where("group_id = ? and approved = true and requested = false", id).
@@ -485,7 +479,6 @@ func (s *GroupService) GetGroup(userID string, id string) (*model.Group, error) 
 
 	}, 10*time.Minute)
 
-	fmt.Println("GROUP D", group)
 	if err != nil {
 		return nil, err
 	}

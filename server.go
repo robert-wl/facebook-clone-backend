@@ -80,9 +80,10 @@ func main() {
 		},
 	})
 
-	database.DropDatabase()
-	database.MigrateDatabase()
-	database.FakeData()
+	//database.DropDatabase()
+	//database.MigrateDatabase()
+	//database.FakeData()
+
 	adapter.NewRedisCacheAdapter().DelAll()
 
 	srv.AddTransport(transport.Options{})

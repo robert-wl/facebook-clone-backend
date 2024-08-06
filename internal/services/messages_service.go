@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/adapter"
@@ -180,7 +179,6 @@ func (s *MessagesService) GetConversations(userID string) ([]*model.Conversation
 			return nil, err
 		}
 
-		fmt.Println(len(groups))
 		var groupMap = make(map[string]*model.Group)
 		for _, group := range groups {
 			groupMap[group.ID] = group
@@ -194,14 +192,9 @@ func (s *MessagesService) GetConversations(userID string) ([]*model.Conversation
 					Background: currGroup.Background,
 					Name:       currGroup.Name,
 				}
-				//conversation.Group = groupMap[*conversation.GroupID]
-				fmt.Println("INI SIINYA")
-				fmt.Println(groupMap[*conversation.GroupID])
-				fmt.Println("-=-=-=-=-=-=-=-=-=-=-=-=-=-")
 			}
 		}
 
-		//fmt.Println(conversations)
 		return conversations, nil
 	}, 10*time.Minute)
 

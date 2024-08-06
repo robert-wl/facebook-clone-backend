@@ -84,7 +84,6 @@ func (s *UserService) AuthenticateUser(email string, password string) (string, e
 		return user, nil
 	}, time.Minute*60)
 
-	fmt.Println("USER", user, err)
 	if err != nil {
 		return "", err
 	}

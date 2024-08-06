@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -124,7 +123,6 @@ func (s *StoryService) GetUserWithStories(userID string) ([]*model.User, error) 
 			return nil, err
 		}
 
-		fmt.Println("HAHAHAHAHAHAHA", users)
 		return users, nil
 	}, 10*time.Second)
 
