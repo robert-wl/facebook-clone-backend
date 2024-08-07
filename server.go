@@ -34,7 +34,7 @@ func main() {
 	router := chi.NewRouter()
 
 	cors := cors2.New(cors2.Options{
-		AllowedOrigins:   []string{"http://localhost", "http://localhost:5173", "http://localhost:8080", "chrome-extension://flnheeellpciglgpaodhkhmapeljopja"},
+		AllowedOrigins:   []string{"http://localhost", "http://localhost:5173", "http://localhost:8080", "http://localhost:4173"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
 		Debug:            true,
@@ -80,9 +80,9 @@ func main() {
 		},
 	})
 
-	//database.DropDatabase()
-	//database.MigrateDatabase()
-	//database.FakeData()
+	// database.DropDatabase()
+	// database.MigrateDatabase()
+	// database.FakeData()
 
 	adapter.NewRedisCacheAdapter().DelAll()
 

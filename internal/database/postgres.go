@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/utils"
 	"gorm.io/driver/postgres"
@@ -10,13 +11,29 @@ import (
 
 var database *gorm.DB
 
-const defaultDatabase = "host=localhost user=postgres password=postgres dbname=facebook port=5432 sslmode=disable TimeZone=Asia/Jakarta"
-
 func GetDBInstance() *gorm.DB {
 	if database == nil {
-		dsn := utils.GetDotENVVariable("DATABASE_URL", defaultDatabase)
+		host := utils.GetDotENVVariable("DATABASE_HOST", "localhost")
+		user := utils.GetDotENVVariable("DATABASE_USER", "postgres")
+		password := utils.GetDotENVVariable("DATABASE_PASSWORD", "postgres")
+		dbname := utils.GetDotENVVariable("DATABASE_NAME", "facebook")
+		port := utils.GetDotENVVariable("DATABASE_PORT", "5432")
+		sslmode := utils.GetDotENVVariable("DATABASE_SSLMODE", "disable")
+		timezone := utils.GetDotENVVariable("DATABASE_TIMEZONE", "Asia/Jakarta")
 
-		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		url := fmt.Sprintf("host=%s user=%s password=%s port=%s sslmode=%s TimeZone=%s", host, user, password, port, sslmode, timezone)
+
+		db, err := gorm.Open(postgres.Open(url), &gorm.Config{})
+
+		if err != nil {
+			panic(err)
+		}
+
+		db.Exec(fmt.Sprintf("SELECT 'CREATE DATABASE mydb' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '%s')", dbname))
+
+		url = fmt.Sprintf("host=%s user=%s password=%s  dbname=%s port=%s sslmode=%s TimeZone=%s", host, user, password, dbname, port, sslmode, timezone)
+
+		db, err = gorm.Open(postgres.Open(url), &gorm.Config{})
 
 		if err != nil {
 			panic(err)
