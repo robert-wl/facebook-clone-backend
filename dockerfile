@@ -4,8 +4,6 @@ RUN apk update && apk add --no-cache git
 
 WORKDIR /app
 
-COPY . .env .
-
 RUN go get -d -v ./...
 
 RUN go install -v ./...
