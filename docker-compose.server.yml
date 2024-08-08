@@ -33,8 +33,6 @@ services:
       - POSTGRES_PORT=${DATABASE_PORT}
       - DATABASE_HOST=${DATABASE_HOST}
     restart: on-failure
-    ports:
-      - 5302:5432
     networks:
       - facebook
     volumes:
@@ -44,8 +42,6 @@ services:
     image: redis:6.2-alpine
     container_name: facebook-clone-redis
     restart: on-failure
-    ports:
-      - 5303:6379
     command: /bin/sh -c "redis-server --requirepass ${REDIS_PASSWORD}"
     volumes: 
       - cache:/data
