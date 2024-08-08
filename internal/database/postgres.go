@@ -29,7 +29,7 @@ func GetDBInstance() *gorm.DB {
 			panic(err)
 		}
 
-		db.Exec(fmt.Sprintf("SELECT 'CREATE DATABASE mydb' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '%s')", dbname))
+		db.Exec(fmt.Sprintf("CREATE DATABASE %s", dbname))
 
 		url = fmt.Sprintf("host=%s user=%s password=%s  dbname=%s port=%s sslmode=%s TimeZone=%s", host, user, password, dbname, port, sslmode, timezone)
 
