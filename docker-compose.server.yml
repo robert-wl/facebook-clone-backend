@@ -1,0 +1,63 @@
+version: '3.8'
+services:
+  backend:
+    container_name: facebook-clone-be
+    environment:
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_SSLMODE=${DATABASE_SSLMODE}
+      - DATABASE_TIMEZONE=${DATABASE_TIMEZONE}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_KEY=${JWT_KEY}
+    tty: true
+    build: .
+    ports: 
+      - 5301:8080
+    restart: on-failure
+    depends_on:
+      - postgresql
+      - redis
+    networks:
+      - facebook
+
+  postgresql:
+    image: postgres:14.1-alpine
+    container_name: facebook-clone-db
+    environment:
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_PORT=${DATABASE_PORT}
+      - DATABASE_HOST=${DATABASE_HOST}
+    restart: on-failure
+    ports:
+      - 5302:5432
+    networks:
+      - facebook
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6.2-alpine
+    container_name: facebook-clone-redis
+    restart: on-failure
+    ports:
+      - 5303:6379
+    command: /bin/sh -c "redis-server --requirepass ${REDIS_PASSWORD}"
+    volumes: 
+      - cache:/data
+
+networks:
+  facebook:
+    driver: bridge
+
+
+volumes:
+  db:
+    driver: local
+  cache:
+    driver: local
+    
