@@ -15,6 +15,7 @@ services:
       - DATABASE_TIMEZONE=${DATABASE_TIMEZONE}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - JWT_KEY=${JWT_KEY}
     tty: true
     build: .

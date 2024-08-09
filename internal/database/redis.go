@@ -18,7 +18,6 @@ func GetRedisInstance() *redis.Client {
 		port := utils.GetDotENVVariable("REDIS_PORT", "6379")
 		password := utils.GetDotENVVariable("REDIS_PASSWORD", "")
 
-		fmt.Println("PASSWORD", password)
 		addr := fmt.Sprintf("%s:%s", host, port)
 
 		fmt.Println("Connecting to Redis at", addr)
