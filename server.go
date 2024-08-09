@@ -96,11 +96,11 @@ func main() {
 		Cache: lru.New(100),
 	})
 
-	root := utils.GetDotENVVariable("ROOT", "/")
+	root := utils.GetDotENVVariable("ROOT_PATH", "/")
 
 	router.Handle(root, playground.Handler("GraphQL playground", "/query"))
 
-	query := utils.GetDotENVVariable("QUERY", "/query")
+	query := utils.GetDotENVVariable("QUERY_PATH", "/query")
 
 	router.Handle(query, srv)
 
