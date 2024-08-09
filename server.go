@@ -17,7 +17,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
-	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	cors2 "github.com/rs/cors"
@@ -97,8 +96,6 @@ func main() {
 	})
 
 	root := utils.GetDotENVVariable("ROOT_PATH", "/")
-
-	router.Handle(root, playground.Handler("GraphQL playground", "/query"))
 
 	query := utils.GetDotENVVariable("QUERY_PATH", "/query")
 
