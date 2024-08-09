@@ -15,7 +15,7 @@ services:
       - JWT_KEY=${JWT_KEY}
     tty: true
     build: .
-    ports: 
+    ports:
       - 8080:8080
     restart: on-failure
     depends_on:
@@ -32,13 +32,14 @@ services:
       - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
       - POSTGRES_PORT=${DATABASE_PORT}
       - DATABASE_HOST=${DATABASE_HOST}
+      - POSTGRES_DB=${DATABASE_NAME}
     restart: on-failure
     ports:
       - 5432:5432
     networks:
       - facebook
     volumes:
-      - db:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:
     image: redis:6.2-alpine
@@ -47,17 +48,9 @@ services:
     ports:
       - 6379:6379
     command: /bin/sh -c "redis-server --requirepass ${REDIS_PASSWORD}"
-    volumes: 
-      - cache:/data
+    networks:
+      - facebook
 
 networks:
   facebook:
     driver: bridge
-
-
-volumes:
-  db:
-    driver: local
-  cache:
-    driver: local
-    

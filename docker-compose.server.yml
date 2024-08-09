@@ -32,6 +32,7 @@ services:
       - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
       - POSTGRES_PORT=${DATABASE_PORT}
       - DATABASE_HOST=${DATABASE_HOST}
+      - POSTGRES_DB=${DATABASE_NAME}
     restart: on-failure
     ports:
       - 5432:5432
