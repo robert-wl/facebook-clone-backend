@@ -96,8 +96,13 @@ func main() {
 		Cache: lru.New(100),
 	})
 
-	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/query", srv)
+	root := utils.GetDotENVVariable("ROOT", "/")
+
+	router.Handle(root, playground.Handler("GraphQL playground", "/query"))
+
+	query := utils.GetDotENVVariable("QUERY", "/query")
+
+	router.Handle(query, srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, router))

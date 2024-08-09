@@ -47,6 +47,8 @@ services:
     ports:
       - 6379:6379
     command: /bin/sh -c "redis-server --requirepass ${REDIS_PASSWORD}"
+    networks:
+      - facebook
 
 networks:
   facebook:
