@@ -4,6 +4,8 @@ services:
     image: yahkerobertkertasnya/facebook-clone-be
     container_name: facebook-clone-be
     environment:
+      - ROOT_PATH=${ROOT_PATH}
+      - QUERY_PATH=${QUERY_PATH}
       - DATABASE_HOST=${DATABASE_HOST}
       - DATABASE_USER=${DATABASE_USER}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
