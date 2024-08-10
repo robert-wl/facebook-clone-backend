@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   backend:
-    image: yahkerobertkertasnya/facebook-clone-be
+    image: yahkerobertkertasnya/facebook-clone-be:latest
     container_name: facebook-clone-be
     environment:
       - ROOT_PATH=${ROOT_PATH}
