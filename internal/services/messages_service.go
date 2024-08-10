@@ -2,10 +2,11 @@ package services
 
 import (
 	"context"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/graph/model"
 	"github.com/yahkerobertkertasnya/facebook-clone-backend/internal/adapter"
-	"time"
 )
 
 type MessagesService struct {
@@ -187,6 +188,11 @@ func (s *MessagesService) GetConversations(userID string) ([]*model.Conversation
 		for _, conversation := range conversations {
 			if conversation.GroupID != nil {
 				currGroup := groupMap[*conversation.GroupID]
+
+				if currGroup == nil {
+					continue
+				}
+
 				conversation.Group = &model.Group{
 					ID:         currGroup.ID,
 					Background: currGroup.Background,
