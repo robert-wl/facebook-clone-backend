@@ -1,0 +1,10 @@
+**/node_modules/
+**/dist/
+**/tmp
+**/.git
+**/.vscode
+**/.idea
+**/.env
+**/coverage
+**/test
+**/tests

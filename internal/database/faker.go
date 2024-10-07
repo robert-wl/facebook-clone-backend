@@ -187,7 +187,7 @@ func generatePost(user model.User) []model.Post {
 			Content:    faker.Sentence(),
 			Privacy:    "public",
 			ShareCount: rand.Intn(100),
-			CreatedAt:  time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
+			CreatedAt:  time.Now().Add(-time.Hour * time.Duration(900+rand.Intn(1000000))),
 			Files:      files,
 		}
 
@@ -378,7 +378,8 @@ func generateConversation(users []model.User) {
 					continue
 				}
 
-				if err := db.Find(&model.ConversationUsers{}, "user_id = ? AND user_id = ?", randUser[i].ID, randUser[j].ID).Error; err == nil {
+				var conv *model.ConversationUsers
+				if err := db.Find(&conv, "user_id = ? OR user_id = ?", randUser[i].ID, randUser[j].ID).Error; err == nil && conv != nil {
 					continue
 				}
 
@@ -776,7 +777,7 @@ func generateGroupPosts(groups map[string][]model.Member) map[string][]model.Pos
 				Content:    faker.Sentence(),
 				Privacy:    "group",
 				ShareCount: rand.Intn(100),
-				CreatedAt:  time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
+				CreatedAt:  time.Now().Add(-time.Hour * time.Duration(100+rand.Intn(1000000))),
 				Files:      files,
 				GroupID:    &members[0].GroupID,
 			}
@@ -831,7 +832,7 @@ func generateGroupPostComment(members map[string][]model.Member, posts map[strin
 						UserID:       user.UserID,
 						Content:      faker.Sentence(),
 						ParentPostID: &post.ID,
-						CreatedAt:    time.Now().Add(-time.Hour * time.Duration(90000+rand.Intn(1000000))),
+						CreatedAt:    time.Now().Add(-time.Hour * time.Duration(900+rand.Intn(1000000))),
 					}
 
 					db.Create(&comment)
