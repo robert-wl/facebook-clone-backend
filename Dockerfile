@@ -24,6 +24,7 @@ FROM alpine:3.20
 WORKDIR /app
 
 COPY --from=builder /app/binary /app/binary
+COPY --from=builder /app/*.json /app/
 
 EXPOSE 8080
 
