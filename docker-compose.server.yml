@@ -20,7 +20,7 @@ services:
     tty: true
     build: .
     ports: 
-      - 5301:8080
+      - '5301:8080'
     restart: on-failure
     depends_on:
       - postgresql
@@ -39,7 +39,7 @@ services:
       - POSTGRES_DB=${DATABASE_NAME}
     restart: on-failure
     ports:
-      - 5432:5432
+      - '5302:5432'
     networks:
       - facebook
     volumes:
@@ -50,11 +50,10 @@ services:
     container_name: facebook-clone-redis
     restart: on-failure
     ports:
-      - 6379:6379
+      - '5303:6379'
     command: /bin/sh -c "redis-server --requirepass ${REDIS_PASSWORD}"
     networks:
       - facebook
-
 networks:
   facebook:
     driver: bridge
